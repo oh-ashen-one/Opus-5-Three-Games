@@ -1,0 +1,3 @@
+# ignore everything by default (repo exists for Claude cloud sessions)
+*
+!.gitignore
