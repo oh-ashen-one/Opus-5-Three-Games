@@ -93,8 +93,8 @@ Conventions:
 
 ## 4. Audio — synthesized
 
-No sample packs, no copyrighted tracks. Everything is generated with numpy/scipy and encoded with
-ffmpeg (MacBook only).
+No sample packs, no copyrighted tracks. Everything is generated with **numpy only** — no scipy, so it
+runs on the Studio's Python 3.9 too. `ffmpeg` (MacBook only) is for re-encoding, not synthesis.
 
 ```bash
 tools/audiogen/synth.py <game-dir> <asset-id> <kind> [--params …]
