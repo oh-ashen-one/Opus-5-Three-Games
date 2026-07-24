@@ -55,3 +55,6 @@ export_presets.cfg
 # Python
 __pycache__/
 *.pyc
+
+# Godot import cache
+.godot/
