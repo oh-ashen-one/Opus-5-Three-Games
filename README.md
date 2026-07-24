@@ -33,14 +33,23 @@ godot --path 03-teacup-godot
 ## Assets are not in this repo
 
 Binaries (`*.png`, `*.fbx`, `*.wav`, `*.uasset`, …) are gitignored. Each game's
-`assets/manifest.json` records the generation prompt, output path, and sha256 for every asset.
-After a fresh clone:
+`assets/manifest.json` records the generation prompt (or script + args), output path, and sha256 for
+every asset. After a fresh clone:
 
 ```bash
-tools/artgen/rebuild.sh <game-dir>
+tools/artgen/rebuild.sh <game-dir>      # regenerates missing images and audio
 ```
 
-This regenerates the art from the manifest. It requires Codex CLI, which lives on the MacBook.
+Everything is generated — no asset-store downloads:
+
+| | Tool |
+|---|---|
+| Images | `tools/artgen/gen.sh` → Codex CLI (MacBook only) |
+| Audio | `tools/audiogen/synth.py` → numpy synthesis (both machines, deterministic) |
+| Meshes | `tools/blender/` → headless Blender (Studio) |
+| STORMFALL characters | Unreal's bundled Manny/Quinn + 102 animations (UE projects only) |
+
+See [`docs/ART-PIPELINE.md`](docs/ART-PIPELINE.md).
 
 ## Branches
 

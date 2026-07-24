@@ -22,8 +22,9 @@ echo "==> current state"
 python3 "$REPO_ROOT/tools/artgen/manifest.py" check "$GAME_DIR" || true
 echo
 
-# Regenerate every image asset whose file is absent.
-python3 - "$REPO_ROOT" "$GAME_DIR" <<'PY' | while IFS=$'\t' read -r id prompt; do
+# Regenerate every missing asset. Blender meshes are skipped — rerun their scripts by hand,
+# since they may depend on textures that this pass is still generating.
+python3 - "$REPO_ROOT" "$GAME_DIR" <<'PY' | while IFS=$'\t' read -r tool id rest; do
 import json, sys
 from pathlib import Path
 
@@ -31,14 +32,26 @@ repo, game = Path(sys.argv[1]), sys.argv[2]
 base = repo / game
 data = json.loads((base / "assets" / "manifest.json").read_text())
 for a in data["assets"]:
-    if a.get("tool") != "codex":
-        continue          # meshes/audio are rebuilt by their own scripts
     if (base / a["path"]).exists():
         continue
-    print(f"{a['id']}\t{a['prompt']}".replace("\n", " "))
+    tool = a.get("tool")
+    if tool == "codex":
+        rest = a["prompt"]
+    elif tool == "audiogen":
+        rest = " ".join(a["args"])
+    else:
+        print(f"skip\t{a['id']}\t{tool} asset must be rebuilt manually")
+        continue
+    print(f"{tool}\t{a['id']}\t{rest}".replace("\n", " "))
 PY
-  echo "--- regenerating $id"
-  "$REPO_ROOT/tools/artgen/gen.sh" "$GAME_DIR" "$id" "$prompt"
+  case "$tool" in
+    codex)    echo "--- regenerating image $id"
+              "$REPO_ROOT/tools/artgen/gen.sh" "$GAME_DIR" "$id" "$rest" ;;
+    audiogen) echo "--- regenerating audio $id"
+              # shellcheck disable=SC2086
+              python3 "$REPO_ROOT/tools/audiogen/synth.py" "$GAME_DIR" "$id" $rest ;;
+    skip)     echo "!!! $id — $rest" ;;
+  esac
 done
 
 echo

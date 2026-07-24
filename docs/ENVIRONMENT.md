@@ -38,26 +38,49 @@ Authenticated through the ChatGPT account in `~/.codex/auth.json` (`OPENAI_API_K
 **no API key needed**). Generated images land in `~/.codex/generated_images/<session-uuid>/*.png`;
 114 were already on disk from previous sessions, so the mechanism is real.
 
-> 🔴 **Currently broken — Codex CLI is out of date.** An end-to-end test of `tools/artgen/gen.sh`
-> on 2026-07-24 failed with:
+> ✅ **Verified working end-to-end on 2026-07-24.** `tools/artgen/gen.sh` produced a clean 1024²
+> tileable concrete texture and recorded it in the manifest.
 >
-> ```
-> ERROR: The 'gpt-5.6-sol' model requires a newer version of Codex.
->        Please upgrade to the latest app or CLI and try again.
-> ```
->
-> `~/.codex/config.toml` pins `model = "gpt-5.6-sol"`; installed CLI is **0.131.0**, npm has **0.145.0**.
-> Fix before the first art pass:
->
-> ```bash
-> npm install -g @openai/codex@latest   # or: codex update
-> ```
->
-> Then re-run the end-to-end check:
-> `tools/artgen/gen.sh 02-strike-godot _pipeline_test "a seamless tileable concrete wall texture"`
->
-> (Unrelated noise in the same run: the Linear and Notion MCP servers configured for Codex have expired
-> OAuth tokens. Harmless here.)
+> This required upgrading Codex from 0.131.0 → **0.145.0** (`npm install -g @openai/codex@latest`);
+> the config pins `model = "gpt-5.6-sol"`, which the older CLI rejected.
+
+**Codex is for image generation only.** It is not used for meshes, animation, audio, or code in this
+project — see `docs/ART-PIPELINE.md` for what handles those.
+
+> Harmless noise in Codex runs: the Linear and Notion MCP servers in its config have expired OAuth
+> tokens and log errors on startup. Ignore them.
+
+## Unreal bundled content (STORMFALL)
+
+UE 5.8 ships a complete third-person shooter animation set under
+`Templates/TemplateResources/`, licensed by the UE EULA for use in Unreal projects. **This fully
+resolves STORMFALL's humanoid animation problem — no downloads, no Mixamo.**
+
+| Asset | Path (under `Templates/TemplateResources/`) |
+|---|---|
+| Skeletal meshes | `High/Characters/Content/Mannequins/Meshes/SKM_Manny_Simple`, `SKM_Quinn_Simple` |
+| **102 animation sequences** | `High/Characters/Content/Mannequins/Anims/` |
+| Control rigs | `.../Mannequins/Rigs/` — incl. `CR_Mannequin_FootIK`, `CR_Mannequin_Procedural` |
+| Weapon meshes | `Standard/Weapons/Content/{Rifle,Pistol,GrenadeLauncher}/Meshes/SKM_*` |
+| Shooter anim BPs | `Standard/Variant_Shooter/Content/Anims/ABP_TP_Rifle`, `ABP_FP_Weapon`, … |
+
+The 102 sequences cover, for both Rifle and Pistol: 8-direction walk and jog, aim offsets, ADS idle,
+fire, reload, equip, dry-fire, jump start / fall loop / recovery, directional hit reactions
+(light / medium / heavy), and 6 directional death animations.
+
+> ⚠️ **EULA scope:** this content is licensed for **Unreal Engine projects only**. It may not be
+> exported into the Godot games. STRIKE PROTOCOL and TEACUP author their own — see `ART-PIPELINE.md`.
+
+## Audio tooling
+
+| Tool | MacBook | Studio |
+|---|---|---|
+| numpy | 2.4.6 | 2.0.2 |
+| scipy | 1.18.0 | — |
+| ffmpeg | ✅ | ❌ |
+| sox / fluidsynth | ❌ | ❌ |
+
+Sufficient. Audio is synthesized directly with numpy/scipy and encoded with ffmpeg on the MacBook.
 
 Codex is **MacBook-only**. Generate here, then rsync to the Studio:
 
@@ -80,7 +103,8 @@ godot --version && codex --version
 
 ## Known gaps
 
-- **Codex CLI needs upgrading** before any art can be generated — see the red box above.
-- **No humanoid animation source.** See the open decision at the end of `GOAL.md`.
 - **No `git-lfs` on the Studio.** Intentional — binaries are gitignored, not versioned.
 - **`godot` is not on the Studio's `PATH`.** Use the full `.app` binary path there.
+- **Studio Python is 3.9.6** (MacBook is 3.14.5). Tooling must stay 3.9-compatible; `tools/artgen`
+  is verified on both.
+- **No `ffmpeg` on the Studio.** Encode audio on the MacBook and rsync.
