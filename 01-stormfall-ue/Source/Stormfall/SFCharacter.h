@@ -9,6 +9,7 @@
 class UCameraComponent;
 class USpringArmComponent;
 class UInputAction;
+class USFBuildComponent;
 class UInputMappingContext;
 struct FInputActionValue;
 
@@ -45,6 +46,8 @@ protected:
 	void SprintStart(const FInputActionValue& Value);
 	void SprintStop(const FInputActionValue& Value);
 	void CrouchToggle(const FInputActionValue& Value);
+	void BuildPressed(const FInputActionValue& Value);
+	void CycleBuildPiece(const FInputActionValue& Value);
 
 	// ── Components ───────────────────────────────────────────────────────────
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stormfall|Camera")
@@ -78,6 +81,16 @@ protected:
 
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
 	TObjectPtr<UInputAction> CrouchAction;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
+	TObjectPtr<UInputAction> BuildAction;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
+	TObjectPtr<UInputAction> CyclePieceAction;
+
+	/** Building lives in a component so bots can use the identical code path. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stormfall|Build")
+	TObjectPtr<USFBuildComponent> BuildComponent;
 
 	// ── Movement tuning ──────────────────────────────────────────────────────
 	/** Default ground speed, cm/s. */

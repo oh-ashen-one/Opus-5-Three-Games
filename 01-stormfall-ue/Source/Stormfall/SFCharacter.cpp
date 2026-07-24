@@ -3,6 +3,7 @@
 #include "SFCharacter.h"
 
 #include "SFDamage.h"
+#include "SFBuildComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
@@ -50,6 +51,8 @@ ASFCharacter::ASFCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 	FollowCamera->FieldOfView = 90.f;
+
+	BuildComponent = CreateDefaultSubobject<USFBuildComponent>(TEXT("BuildComponent"));
 }
 
 namespace
@@ -107,9 +110,30 @@ void ASFCharacter::BuildDefaultInput()
 		DefaultMappingContext->MapKey(LookAction, EKeys::Mouse2D).Modifiers.Add(NegateY);
 	}
 
+	BuildAction = MakeAction(this, TEXT("IA_Build"), EInputActionValueType::Boolean);
+	CyclePieceAction = MakeAction(this, TEXT("IA_CyclePiece"), EInputActionValueType::Boolean);
+
 	DefaultMappingContext->MapKey(JumpAction, EKeys::SpaceBar);
 	DefaultMappingContext->MapKey(SprintAction, EKeys::LeftShift);
 	DefaultMappingContext->MapKey(CrouchAction, EKeys::LeftControl);
+	DefaultMappingContext->MapKey(BuildAction, EKeys::LeftMouseButton);
+	DefaultMappingContext->MapKey(CyclePieceAction, EKeys::Q);
+}
+
+void ASFCharacter::BuildPressed(const FInputActionValue& /*Value*/)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->TryBuild();
+	}
+}
+
+void ASFCharacter::CycleBuildPiece(const FInputActionValue& /*Value*/)
+{
+	if (BuildComponent)
+	{
+		BuildComponent->CyclePiece(1);
+	}
 }
 
 void ASFCharacter::BeginPlay()
@@ -257,5 +281,13 @@ void ASFCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	if (CrouchAction)
 	{
 		Input->BindAction(CrouchAction, ETriggerEvent::Started, this, &ASFCharacter::CrouchToggle);
+	}
+	if (BuildAction)
+	{
+		Input->BindAction(BuildAction, ETriggerEvent::Started, this, &ASFCharacter::BuildPressed);
+	}
+	if (CyclePieceAction)
+	{
+		Input->BindAction(CyclePieceAction, ETriggerEvent::Started, this, &ASFCharacter::CycleBuildPiece);
 	}
 }
