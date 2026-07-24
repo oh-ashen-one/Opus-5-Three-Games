@@ -75,9 +75,13 @@ void USFWeaponComponent::GetViewPoint(FVector& OutLocation, FVector& OutDirectio
 		return;
 	}
 
-	// Players shoot from the camera so the crosshair is honest. Bots have no
-	// camera, so they shoot from eye height along their facing.
-	if (const UCameraComponent* Camera = Owner->FindComponentByClass<UCameraComponent>())
+	// Players shoot from the camera so the crosshair is honest. Bots carry the
+	// same pawn (and therefore the same camera component), but firing from a
+	// third-person boom would put their muzzle several metres behind them, so
+	// only a locally-controlled player uses the camera.
+	const APawn* OwnerPawn = Cast<APawn>(Owner);
+	const bool bPlayerControlled = OwnerPawn && OwnerPawn->IsPlayerControlled();
+	if (const UCameraComponent* Camera = bPlayerControlled ? Owner->FindComponentByClass<UCameraComponent>() : nullptr)
 	{
 		OutLocation = Camera->GetComponentLocation();
 		OutDirection = Camera->GetForwardVector();
