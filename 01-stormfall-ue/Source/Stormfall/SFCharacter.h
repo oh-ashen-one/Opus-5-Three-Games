@@ -10,6 +10,8 @@ class UCameraComponent;
 class USpringArmComponent;
 class UInputAction;
 class USFBuildComponent;
+class USFHealthComponent;
+class USFWeaponComponent;
 class UInputMappingContext;
 struct FInputActionValue;
 
@@ -48,6 +50,8 @@ protected:
 	void CrouchToggle(const FInputActionValue& Value);
 	void BuildPressed(const FInputActionValue& Value);
 	void CycleBuildPiece(const FInputActionValue& Value);
+	void FirePressed(const FInputActionValue& Value);
+	void ReloadPressed(const FInputActionValue& Value);
 
 	// ── Components ───────────────────────────────────────────────────────────
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stormfall|Camera")
@@ -88,9 +92,21 @@ protected:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
 	TObjectPtr<UInputAction> CyclePieceAction;
 
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
+	TObjectPtr<UInputAction> FireAction;
+
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
+	TObjectPtr<UInputAction> ReloadAction;
+
 	/** Building lives in a component so bots can use the identical code path. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stormfall|Build")
 	TObjectPtr<USFBuildComponent> BuildComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stormfall|Health")
+	TObjectPtr<USFHealthComponent> HealthComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stormfall|Weapon")
+	TObjectPtr<USFWeaponComponent> WeaponComponent;
 
 	// ── Movement tuning ──────────────────────────────────────────────────────
 	/** Default ground speed, cm/s. */

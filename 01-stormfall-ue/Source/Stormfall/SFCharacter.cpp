@@ -4,6 +4,8 @@
 
 #include "SFDamage.h"
 #include "SFBuildComponent.h"
+#include "SFHealthComponent.h"
+#include "SFWeaponComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
@@ -53,6 +55,8 @@ ASFCharacter::ASFCharacter()
 	FollowCamera->FieldOfView = 90.f;
 
 	BuildComponent = CreateDefaultSubobject<USFBuildComponent>(TEXT("BuildComponent"));
+	HealthComponent = CreateDefaultSubobject<USFHealthComponent>(TEXT("HealthComponent"));
+	WeaponComponent = CreateDefaultSubobject<USFWeaponComponent>(TEXT("WeaponComponent"));
 }
 
 namespace
@@ -111,12 +115,16 @@ void ASFCharacter::BuildDefaultInput()
 	}
 
 	BuildAction = MakeAction(this, TEXT("IA_Build"), EInputActionValueType::Boolean);
+	FireAction = MakeAction(this, TEXT("IA_Fire"), EInputActionValueType::Boolean);
+	ReloadAction = MakeAction(this, TEXT("IA_Reload"), EInputActionValueType::Boolean);
 	CyclePieceAction = MakeAction(this, TEXT("IA_CyclePiece"), EInputActionValueType::Boolean);
 
 	DefaultMappingContext->MapKey(JumpAction, EKeys::SpaceBar);
 	DefaultMappingContext->MapKey(SprintAction, EKeys::LeftShift);
 	DefaultMappingContext->MapKey(CrouchAction, EKeys::LeftControl);
-	DefaultMappingContext->MapKey(BuildAction, EKeys::LeftMouseButton);
+	DefaultMappingContext->MapKey(FireAction, EKeys::LeftMouseButton);
+	DefaultMappingContext->MapKey(BuildAction, EKeys::F);
+	DefaultMappingContext->MapKey(ReloadAction, EKeys::R);
 	DefaultMappingContext->MapKey(CyclePieceAction, EKeys::Q);
 }
 
@@ -133,6 +141,22 @@ void ASFCharacter::CycleBuildPiece(const FInputActionValue& /*Value*/)
 	if (BuildComponent)
 	{
 		BuildComponent->CyclePiece(1);
+	}
+}
+
+void ASFCharacter::FirePressed(const FInputActionValue& /*Value*/)
+{
+	if (WeaponComponent)
+	{
+		WeaponComponent->TryFire();
+	}
+}
+
+void ASFCharacter::ReloadPressed(const FInputActionValue& /*Value*/)
+{
+	if (WeaponComponent)
+	{
+		WeaponComponent->StartReload();
 	}
 }
 
@@ -289,5 +313,15 @@ void ASFCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	if (CyclePieceAction)
 	{
 		Input->BindAction(CyclePieceAction, ETriggerEvent::Started, this, &ASFCharacter::CycleBuildPiece);
+	}
+	if (FireAction)
+	{
+		// Triggered, not Started: holding the mouse keeps firing, and the weapon's
+		// own cooldown decides the rate rather than the input system.
+		Input->BindAction(FireAction, ETriggerEvent::Triggered, this, &ASFCharacter::FirePressed);
+	}
+	if (ReloadAction)
+	{
+		Input->BindAction(ReloadAction, ETriggerEvent::Started, this, &ASFCharacter::ReloadPressed);
 	}
 }
