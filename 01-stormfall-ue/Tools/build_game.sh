@@ -60,6 +60,20 @@ if ! otool -L "$BINARY" >/dev/null 2>&1; then
   exit 1
 fi
 
+# The staged .app has the same problem, plus its own: staging does not copy the
+# engine's ThirdParty dylibs (libtbb, libmetalirconverter, ...) into the bundle,
+# and the bundle's relative rpaths miss the engine for the same "../" reason.
+# Patch the packaged binary too, whenever one exists.
+APP_BINARY="$PROJECT_DIR/Dist/Mac/Stormfall.app/Contents/MacOS/Stormfall"
+if [[ -f "$APP_BINARY" ]]; then
+  echo "==> patching packaged app rpaths"
+  for RP in "${THIRD_PARTY_RPATHS[@]}"; do
+    install_name_tool -add_rpath "$RP" "$APP_BINARY" 2>/dev/null || true
+  done
+  codesign --force --deep --sign - --timestamp=none \
+    "$PROJECT_DIR/Dist/Mac/Stormfall.app" 2>/dev/null || true
+fi
+
 if [[ "${1:-}" == "--run" ]]; then
   LOG="${TMPDIR:-/tmp}/sf_smoke.log"
   rm -rf "$PROJECT_DIR/Saved/Logs"
