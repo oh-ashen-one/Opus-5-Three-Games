@@ -2,6 +2,7 @@
 
 #include "SFCharacter.h"
 
+#include "SFDamage.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
@@ -96,15 +97,11 @@ void ASFCharacter::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 
 	const float ImpactSpeed = FMath::Abs(GetVelocity().Z);
-	if (ImpactSpeed <= SafeFallSpeed)
+	const float Damage = SFDamage::ComputeFallDamage(ImpactSpeed, SafeFallSpeed, LethalFallSpeed, MaxHealth);
+	if (Damage <= 0.f)
 	{
 		return;
 	}
-
-	// Linear ramp from "free" to "lethal from full health".
-	const float Range = FMath::Max(LethalFallSpeed - SafeFallSpeed, 1.f);
-	const float Alpha = FMath::Clamp((ImpactSpeed - SafeFallSpeed) / Range, 0.f, 1.f);
-	const float Damage = Alpha * MaxHealth;
 
 	Health = FMath::Max(Health - Damage, 0.f);
 	UE_LOG(LogTemp, Verbose, TEXT("Fall damage %.1f at %.0f cm/s, health %.1f"), Damage, ImpactSpeed, Health);

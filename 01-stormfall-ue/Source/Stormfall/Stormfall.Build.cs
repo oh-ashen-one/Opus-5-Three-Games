@@ -8,6 +8,10 @@ public class Stormfall : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		// So sources in subdirectories (Tests/, etc.) can include module headers
+		// by plain name rather than by relative path.
+		PublicIncludePaths.Add(ModuleDirectory);
+
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core",
