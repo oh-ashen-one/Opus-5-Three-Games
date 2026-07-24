@@ -1,0 +1,20 @@
+; TEACUP - Opus 5 Three Games, project 3 of 3
+; Original work. 1930s rubber-hose homage; no third-party assets or characters.
+
+config_version=5
+
+[application]
+config/name="TEACUP"
+config/description="Run-and-gun boss rush, 2.5D."
+run/main_scene="res://scenes/main_menu.tscn"
+config/features=PackedStringArray("4.4", "Forward Plus")
+
+[display]
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+
+[physics]
+3d/default_gravity=2400.0
+
+[rendering]
+anti_aliasing/quality/msaa_3d=2

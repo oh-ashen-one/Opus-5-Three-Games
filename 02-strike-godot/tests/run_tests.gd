@@ -16,6 +16,7 @@ const SUITES := [
 
 func _initialize() -> void:
 	var t := TestFramework.new()
+	t.expect_at_least(140)
 
 	for suite in SUITES:
 		suite.run(t)
