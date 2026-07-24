@@ -8,6 +8,8 @@
 #include "SFHealthComponent.h"
 #include "SFStormActor.h"
 #include "SFMatch.h"
+#include "SFHUD.h"
+#include "SFPlayerController.h"
 
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
@@ -17,6 +19,8 @@ ASFGameMode::ASFGameMode()
 {
 	DefaultPawnClass = ASFCharacter::StaticClass();
 	GameStateClass = ASFGameState::StaticClass();
+	HUDClass = ASFHUD::StaticClass();
+	PlayerControllerClass = ASFPlayerController::StaticClass();
 	PrimaryActorTick.bCanEverTick = false;
 }
 
