@@ -9,7 +9,12 @@ Work on one game at a time, in the listed order, and do not start the next until
 its Definition of Done.
 
 Read `docs/ENVIRONMENT.md` before touching anything — it has the verified machine, engine, and
-toolchain facts, including which machine each game gets built on.
+toolchain facts.
+
+**All work runs on the Mac Studio** (`midir@192.168.1.157`, M3 Ultra) — every build, render, asset
+generation, and playtest, for all three games. The repo is at `~/dev/Opus-5-Three-Games` there, with
+UE 5.8, Godot 4.7, and Blender 5.2 installed. Nothing heavy runs on the MacBook. The **one exception**
+is Codex image generation, which is only authenticated on the MacBook: generate there, rsync over.
 
 ---
 
@@ -24,7 +29,7 @@ toolchain facts, including which machine each game gets built on.
   not asserted.
 - **Original IP.** These are *recreations of mechanics*, not asset rips or trademark use. No Epic / Valve /
   Studio MDHR assets, names, logos, maps, or character likenesses. Use the codenames below.
-- **Performance target:** 60 fps at 1440p on the Mac Studio (M3 Ultra); 60 fps at 1080p on the M5 MacBook.
+- **Performance target:** 60 fps at 1440p on the Mac Studio (M3 Ultra).
 - **Every game ships with:** a main menu, a settings screen (sensitivity, volume, invert-Y), pause, a win
   screen, a lose screen, and a working quit. Missing UI is the #1 way a build reads as unfinished on camera.
 
@@ -64,7 +69,7 @@ A full match played start to Victory Royale without a crash, at 60 fps, on camer
 ---
 
 ## Game 2 — **STRIKE PROTOCOL**
-**Godot 4.7 (3D) · MacBook · `02-strike-godot/` · branch `game/strike`**
+**Godot 4.7 (3D) · Mac Studio · `02-strike-godot/` · branch `game/strike`**
 *Tactical FPS, bomb defusal. The CS:GO one.*
 
 **The 10 minutes:** one MR6 match (first to 7 rounds) on a single map — you + 4 bots vs 5 bots.
@@ -100,7 +105,7 @@ A full MR6 match to 7 rounds, no crashes, bots a competent player has to actuall
 ---
 
 ## Game 3 — **TEACUP**
-**Godot 4.7 (2.5D) · MacBook · `03-teacup-godot/` · branch `game/teacup`**
+**Godot 4.7 (2.5D) · Mac Studio · `03-teacup-godot/` · branch `game/teacup`**
 *Run-and-gun boss rush. The Cuphead one.*
 
 **The 10 minutes:** a run-and-gun intro stage plus **three multi-phase bosses**. With retries — and there
@@ -128,8 +133,8 @@ textures from the asset pipeline below.
 
 ## Asset pipeline
 
-No asset-store downloads, no manual steps. Generate on the MacBook, rsync to the Studio.
-Full detail in `docs/ART-PIPELINE.md`.
+No asset-store downloads, no manual steps. Everything runs on the Studio except Codex image
+generation, which runs on the MacBook and rsyncs over. Full detail in `docs/ART-PIPELINE.md`.
 
 1. **Images** (textures, sprites, skyboxes, UI, weapon icons) → **Codex CLI, and Codex is used for
    nothing else.** `tools/artgen/gen.sh <game-dir> <asset-id> "<prompt>"`. Verified working.

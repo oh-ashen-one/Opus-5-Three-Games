@@ -5,7 +5,7 @@ Verified 2026-07-24. Re-verify before assuming any of this still holds.
 ## Machines
 
 ### Mac Studio — `midir@192.168.1.157` (`midirstudio.local`)
-Builds **STORMFALL**. Apple M3 Ultra, macOS 26.5.2.
+Builds **all three games**. Apple M3 Ultra, macOS 26.5.2.
 
 | Thing | Value |
 |---|---|
@@ -23,7 +23,7 @@ Builds **STORMFALL**. Apple M3 Ultra, macOS 26.5.2.
 > Cap the DDC, prune `Saved/` between iterations, and raise a flag if free space drops below 30 GB.
 
 ### MacBook — `darkeatermidir@` local
-Builds **STRIKE PROTOCOL** and **TEACUP**, and generates all art. Apple M5, 32 GB RAM, ~268 GB free.
+**Codex image generation only** — everything else runs on the Studio. Apple M5, 32 GB RAM, ~268 GB free.
 
 | Thing | Value |
 |---|---|

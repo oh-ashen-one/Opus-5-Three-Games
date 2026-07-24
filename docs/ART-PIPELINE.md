@@ -150,5 +150,5 @@ looks different now", not "this is broken". Review before accepting.
 Art and audio generate on the MacBook; STORMFALL builds on the Studio:
 
 ```bash
-rsync -av 01-stormfall-ue/assets/ midir@192.168.1.157:~/dev/Opus-5-Three-Games/01-stormfall-ue/assets/
+rsync -av <game>/assets/ midir@192.168.1.157:~/dev/Opus-5-Three-Games/<game>/assets/
 ```
