@@ -58,3 +58,8 @@ __pycache__/
 
 # Godot import cache
 .godot/
+
+# Godot generates these per-script; noise in the diff
+*.uid
+# Packaged builds
+Dist/
