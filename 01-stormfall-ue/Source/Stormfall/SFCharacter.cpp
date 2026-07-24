@@ -1,0 +1,196 @@
+// Copyright Opus 5 Three Games. Original work.
+
+#include "SFCharacter.h"
+
+#include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/SpringArmComponent.h"
+
+ASFCharacter::ASFCharacter()
+{
+	PrimaryActorTick.bCanEverTick = true;
+
+	GetCapsuleComponent()->InitCapsuleSize(38.f, 90.f);
+
+	// The pawn does not rotate with the controller; the mesh turns toward movement
+	// instead. Standard third-person shooter setup.
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+
+	UCharacterMovementComponent* Move = GetCharacterMovement();
+	Move->bOrientRotationToMovement = true;
+	Move->RotationRate = FRotator(0.f, 640.f, 0.f);
+	Move->MaxWalkSpeed = WalkSpeed;
+	Move->MaxWalkSpeedCrouched = CrouchSpeed;
+	Move->JumpZVelocity = 620.f;
+	Move->AirControl = 0.28f;
+	Move->BrakingDecelerationWalking = 2200.f;
+	Move->GroundFriction = 8.f;
+	Move->GetNavAgentPropertiesRef().bCanCrouch = true;
+	Move->SetCrouchedHalfHeight(52.f);
+
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 320.f;
+	CameraBoom->SocketOffset = FVector(0.f, 58.f, 68.f);
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 18.f;
+
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera->bUsePawnControlRotation = false;
+	FollowCamera->FieldOfView = 90.f;
+}
+
+void ASFCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	Health = MaxHealth;
+
+	if (const APlayerController* PC = Cast<APlayerController>(Controller))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+			if (DefaultMappingContext)
+			{
+				Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			}
+		}
+	}
+}
+
+float ASFCharacter::GetGroundSpeed() const
+{
+	return GetVelocity().Size2D();
+}
+
+float ASFCharacter::DesiredMaxSpeed() const
+{
+	if (bIsCrouched)
+	{
+		return CrouchSpeed;
+	}
+	return bWantsToSprint ? SprintSpeed : WalkSpeed;
+}
+
+void ASFCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	// Blend rather than snap, so sprint ramps in instead of popping. This is the
+	// single biggest contributor to the controller feeling good.
+	UCharacterMovementComponent* Move = GetCharacterMovement();
+	Move->MaxWalkSpeed = FMath::FInterpTo(Move->MaxWalkSpeed, DesiredMaxSpeed(), DeltaSeconds, SpeedBlendRate);
+}
+
+void ASFCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	const float ImpactSpeed = FMath::Abs(GetVelocity().Z);
+	if (ImpactSpeed <= SafeFallSpeed)
+	{
+		return;
+	}
+
+	// Linear ramp from "free" to "lethal from full health".
+	const float Range = FMath::Max(LethalFallSpeed - SafeFallSpeed, 1.f);
+	const float Alpha = FMath::Clamp((ImpactSpeed - SafeFallSpeed) / Range, 0.f, 1.f);
+	const float Damage = Alpha * MaxHealth;
+
+	Health = FMath::Max(Health - Damage, 0.f);
+	UE_LOG(LogTemp, Verbose, TEXT("Fall damage %.1f at %.0f cm/s, health %.1f"), Damage, ImpactSpeed, Health);
+}
+
+void ASFCharacter::Move(const FInputActionValue& Value)
+{
+	const FVector2D Axis = Value.Get<FVector2D>();
+	if (!Controller || Axis.IsNearlyZero())
+	{
+		return;
+	}
+
+	// Move relative to where the camera is looking, flattened to the ground plane.
+	const FRotator YawOnly(0.f, Controller->GetControlRotation().Yaw, 0.f);
+	const FVector Forward = FRotationMatrix(YawOnly).GetUnitAxis(EAxis::X);
+	const FVector Right = FRotationMatrix(YawOnly).GetUnitAxis(EAxis::Y);
+
+	AddMovementInput(Forward, Axis.Y);
+	AddMovementInput(Right, Axis.X);
+}
+
+void ASFCharacter::Look(const FInputActionValue& Value)
+{
+	const FVector2D Axis = Value.Get<FVector2D>();
+	AddControllerYawInput(Axis.X);
+	AddControllerPitchInput(Axis.Y);
+}
+
+void ASFCharacter::SprintStart(const FInputActionValue& /*Value*/)
+{
+	bWantsToSprint = true;
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+}
+
+void ASFCharacter::SprintStop(const FInputActionValue& /*Value*/)
+{
+	bWantsToSprint = false;
+}
+
+void ASFCharacter::CrouchToggle(const FInputActionValue& /*Value*/)
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+	else
+	{
+		bWantsToSprint = false;
+		Crouch();
+	}
+}
+
+void ASFCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (!Input)
+	{
+		return;
+	}
+
+	if (MoveAction)
+	{
+		Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASFCharacter::Move);
+	}
+	if (LookAction)
+	{
+		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &ASFCharacter::Look);
+	}
+	if (JumpAction)
+	{
+		Input->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+	}
+	if (SprintAction)
+	{
+		Input->BindAction(SprintAction, ETriggerEvent::Started, this, &ASFCharacter::SprintStart);
+		Input->BindAction(SprintAction, ETriggerEvent::Completed, this, &ASFCharacter::SprintStop);
+	}
+	if (CrouchAction)
+	{
+		Input->BindAction(CrouchAction, ETriggerEvent::Started, this, &ASFCharacter::CrouchToggle);
+	}
+}
