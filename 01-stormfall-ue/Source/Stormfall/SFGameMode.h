@@ -38,6 +38,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stormfall|Match")
 	void RestartMatch();
 
+	/** True on the main-menu level, where no match should run. */
+	UFUNCTION(BlueprintPure, Category = "Stormfall|Match")
+	bool IsMenuLevel() const;
+
 protected:
 	UFUNCTION()
 	void HandlePawnDied(AActor* Victim, AActor* Killer);

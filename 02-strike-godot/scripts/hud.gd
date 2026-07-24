@@ -18,6 +18,7 @@ var _crosshair: Control
 
 var _paused := false
 var _menu_index := 0
+var _buy_open := false
 
 
 func _ready() -> void:
@@ -113,6 +114,9 @@ func _process(_delta: float) -> void:
 		_timer_label.text = _format_clock(match_scene.phase_time)
 		_timer_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.92))
 
+	if _buy_open and match_scene.phase != StrikeMatch.Phase.FREEZE:
+		_close_buy_menu()
+
 	var status := ""
 	if match_scene.phase == StrikeMatch.Phase.FREEZE:
 		status = "FREEZE TIME  -  press B to buy"
@@ -148,11 +152,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_ESCAPE:
-				if not match_scene.match_over:
+				if _buy_open:
+					_close_buy_menu()
+				elif not match_scene.match_over:
 					_toggle_pause()
 			KEY_B:
 				if match_scene.phase == StrikeMatch.Phase.FREEZE:
-					_open_buy_menu()
+					if _buy_open:
+						_close_buy_menu()
+					else:
+						_open_buy_menu()
+			KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8:
+				if _buy_open:
+					_purchase(event.keycode)
 			KEY_DOWN:
 				_menu_index = mini(_menu_index + 1, 1)
 			KEY_UP:
@@ -172,7 +184,48 @@ func _toggle_pause() -> void:
 				"[color=#7f7]> QUIT <[/color]" if _menu_index == 1 else "QUIT"]
 
 
+func _close_buy_menu() -> void:
+	_buy_open = false
+	_menu_panel.visible = false
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+## Actually spend the money. Before this the buy menu listed prices and did
+## nothing at all when you pressed a key -- the player could never buy anything,
+## which quietly removed the entire economy from the player's side of the game.
+func _purchase(keycode: int) -> void:
+	var p = match_scene.player
+	if p == null or not is_instance_valid(p):
+		return
+
+	var weapon_keys := {
+		KEY_1: StrikeWeapons.Id.USP, KEY_2: StrikeWeapons.Id.DEAGLE,
+		KEY_3: StrikeWeapons.Id.SMG, KEY_4: StrikeWeapons.Id.AK,
+		KEY_5: StrikeWeapons.Id.M4, KEY_6: StrikeWeapons.Id.AWP,
+	}
+
+	if weapon_keys.has(keycode):
+		var id: int = weapon_keys[keycode]
+		var price: int = StrikeWeapons.spec(id).price
+		if p.money >= price:
+			p.money -= price
+			p.equip(id)
+	elif keycode == KEY_7:
+		if p.armor < 100.0 and p.money >= StrikeEconomy.ARMOR_HELMET_PRICE:
+			p.money -= StrikeEconomy.ARMOR_HELMET_PRICE
+			p.armor = 100.0
+			p.has_helmet = true
+	elif keycode == KEY_8:
+		if not p.has_kit and p.team == StrikeMatch.Team.CT \
+				and p.money >= StrikeEconomy.KIT_PRICE:
+			p.money -= StrikeEconomy.KIT_PRICE
+			p.has_kit = true
+
+	_open_buy_menu()  # refresh the panel with new prices/affordability
+
+
 func _open_buy_menu() -> void:
+	_buy_open = true
 	# Buy menu: number keys purchase directly, which is faster on camera than
 	# navigating a grid and matches how the real thing is actually played.
 	var p = match_scene.player
@@ -188,8 +241,12 @@ func _open_buy_menu() -> void:
 		var affordable: bool = p.money >= spec.price
 		lines += "%s  %s  $%d%s\n" % [o[0], spec.name, spec.price,
 				"" if affordable else "   (too expensive)"]
-	lines += "\n7  Armour $%d\n8  Defuse kit $%d\n\nEsc to close[/center]" % [
-			StrikeEconomy.ARMOR_HELMET_PRICE, StrikeEconomy.KIT_PRICE]
+	lines += "\n7  Armour+Helmet $%d%s\n8  Defuse kit $%d%s\n\nB to close[/center]" % [
+			StrikeEconomy.ARMOR_HELMET_PRICE,
+			"   (owned)" if p.armor >= 100.0 else "",
+			StrikeEconomy.KIT_PRICE,
+			"   (owned)" if p.has_kit else ("" if p.team == StrikeMatch.Team.CT
+					else "   (CT only)")]
 	_menu_label.text = lines
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 

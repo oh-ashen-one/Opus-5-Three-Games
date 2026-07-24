@@ -24,9 +24,22 @@ ASFGameMode::ASFGameMode()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
+bool ASFGameMode::IsMenuLevel() const
+{
+	const UWorld* World = GetWorld();
+	return World && World->GetName().Contains(TEXT("Menu"));
+}
+
 void ASFGameMode::StartPlay()
 {
 	Super::StartPlay();
+
+	// The menu level shares this game mode but must not run a match behind the
+	// menu -- otherwise 15 bots fight an invisible war while you read the title.
+	if (IsMenuLevel())
+	{
+		return;
+	}
 
 	SpawnStream.Initialize(20260724);
 	bMatchResolved = false;

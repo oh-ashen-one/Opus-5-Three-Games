@@ -14,6 +14,10 @@ Open the project in the Unreal Editor and press Play:
 The editor opens on `Lvl_Island`. Hit **Play** (Alt+P) and select **New Editor Window** or
 **Standalone Game** for a clean fullscreen view without editor overlays.
 
+Note: the packaged/standalone boot map is `Lvl_MainMenu`, not the island. Earlier
+revisions of this file claimed the game opened on `Lvl_Island`; it actually opened
+on `Lvl_Greybox`, which was a real misconfiguration and is now fixed.
+
 ### Controls
 
 | Input | Action |
@@ -32,6 +36,7 @@ The editor opens on `Lvl_Island`. Hit **Play** (Alt+P) and select **New Editor W
 
 ### Maps
 
+- `Lvl_MainMenu` — boot level; PLAY loads the island
 - `Lvl_Island` — the real match: 8 POIs, 15 bots, storm, 518 actors
 - `Lvl_Greybox` — movement tuning box with drop-test ledges at known heights
 

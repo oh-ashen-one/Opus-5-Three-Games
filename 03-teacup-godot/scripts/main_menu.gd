@@ -2,10 +2,11 @@ extends Control
 
 ## Main menu. Keyboard-driven, built in code so no UI assets are needed.
 
-const ITEMS := ["PLAY", "SETTINGS", "QUIT"]
+const ITEMS := ["PLAY FULL RUN", "BOSS SELECT", "SETTINGS", "QUIT"]
 
 var _index := 0
 var _in_settings := false
+var _in_boss_select := false
 var _label: RichTextLabel
 
 # Settings applied to the match when it starts.
@@ -30,6 +31,17 @@ func _ready() -> void:
 
 
 func _refresh() -> void:
+	if _in_boss_select:
+		var rows := ["FIZZWICK THE BOTTLECAP", "MAESTRO GRIND",
+				"EARL GREY THE TERRIBLE", "BACK"]
+		var text := "[center][font_size=40]BOSS SELECT[/font_size]\n\n"
+		text += "[font_size=16]skips the opening stage[/font_size]\n\n"
+		for i in rows.size():
+			text += ("[color=#ffd24a]> %s <[/color]\n" if i == _index else "%s\n") % rows[i]
+		text += "[/center]"
+		_label.text = text
+		return
+
 	if _in_settings:
 		var rows := [
 			"MOUSE SENSITIVITY   %.2f" % mouse_sensitivity,
@@ -56,7 +68,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
 
-	var count := 4 if _in_settings else ITEMS.size()
+	var count := 4 if (_in_settings or _in_boss_select) else ITEMS.size()
 	match event.keycode:
 		KEY_UP:
 			_index = maxi(_index - 1, 0)
@@ -81,14 +93,30 @@ func _adjust(delta: int) -> void:
 
 
 func _confirm() -> void:
+	if _in_boss_select:
+		if _index == 3:
+			_in_boss_select = false
+			_index = 0
+			return
+		TeacupRunConfig.start_boss = _index
+		TeacupRunConfig.skip_intro = true
+		get_tree().change_scene_to_file("res://scenes/stage.tscn")
+		return
+
 	if _in_settings:
 		if _index == 3:
 			_in_settings = false
 			_index = 0
 		return
+
 	match _index:
-		0: get_tree().change_scene_to_file("res://scenes/stage.tscn")
+		0:
+			TeacupRunConfig.reset()
+			get_tree().change_scene_to_file("res://scenes/stage.tscn")
 		1:
+			_in_boss_select = true
+			_index = 0
+		2:
 			_in_settings = true
 			_index = 0
-		2: get_tree().quit()
+		3: get_tree().quit()

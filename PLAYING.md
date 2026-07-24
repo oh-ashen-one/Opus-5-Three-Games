@@ -12,7 +12,10 @@ Everything runs on the Mac Studio (`midir@192.168.1.157`), repo at
   ~/dev/Opus-5-Three-Games/01-stormfall-ue/Stormfall.uproject
 ```
 
-Opens on `Lvl_Island`. Press **Play → Standalone Game** for a clean view.
+Opens the editor on `Lvl_Island`. Press **Play → Standalone Game** for a clean view.
+
+Launching the *game* (rather than the editor) now boots to `Lvl_MainMenu`; choose
+**PLAY** to load the island. Arrows + Enter navigate menus.
 
 | Input | Action |
 |---|---|
@@ -24,8 +27,8 @@ Opens on `Lvl_Island`. Press **Play → Standalone Game** for a clean view.
 | `Q` | Cycle wall → ramp → floor → roof |
 | `Esc` | Pause |
 
-Maps: `Lvl_Island` (the match — 8 POIs, 15 bots, storm) and `Lvl_Greybox`
-(movement tuning, drop-test ledges).
+Maps: `Lvl_MainMenu` (boot), `Lvl_Island` (the match — 8 POIs, 15 bots, storm),
+`Lvl_Greybox` (movement tuning, drop-test ledges).
 
 ⚠️ **The packaged `.app` does not launch** — see `01-stormfall-ue/RUNNING.md`.
 It is a path-layout problem specific to this machine, not a game bug. Editor
@@ -49,7 +52,7 @@ Or open the project in Godot and press F5. Starts at the main menu.
 | `Space` | Jump |
 | **LMB** | Fire |
 | `R` | Reload |
-| `B` | Buy menu (during freeze time) |
+| `B` | Buy menu (during freeze time) — then `1`-`8` to purchase |
 | `Esc` | Pause |
 | Arrows + `Enter` | Menus |
 
@@ -79,6 +82,10 @@ MR6: first to 7 rounds, sides swap at 6.
 | `C` | **Parry** — only works on pink projectiles |
 | `B` | EX shot (costs 1/4 meter) |
 | `V` | Super (costs full meter) |
+
+The run opens with a **run-and-gun platforming stage** — reach the golden marker
+past five turrets — then goes into the three bosses. **BOSS SELECT** on the main
+menu skips the opener and jumps straight to any boss.
 
 Three bosses, three phases each. Parrying pink is the only way to build meter,
 and four parries fill the bar exactly. Death retries in under a second.
@@ -135,8 +142,9 @@ building, storm, loot, harvesting and combat all work in-world.
 
 **Known tuning gaps:**
 
-- STRIKE: only ~1 bomb plant per 12 rounds. The mechanic works end to end but
-  Ts rarely survive long enough to use it; the bots trade too readily.
+- STRIKE: bomb plants are rare (0-1 per 12-round match across runs). The mechanic
+  works end to end -- plant, timer, explode, defuse -- but bots trade too readily
+  to survive to the plant, so most rounds end by elimination.
 - STRIKE: bots hold angles and shoot, but have no utility usage (smokes and
   flashes exist as rules, not as bot behaviour).
 - TEACUP: bosses are spheres. The rubber-hose look is in the lighting, grade and

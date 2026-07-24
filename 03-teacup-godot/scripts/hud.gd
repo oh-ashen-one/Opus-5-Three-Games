@@ -3,6 +3,7 @@ extends CanvasLayer
 ## HUD: hit points, super meter, boss health, death counter, grades.
 
 var stage: Node = null
+var intro: Node = null
 
 var _label: RichTextLabel
 var _boss_bar: ColorRect
@@ -35,7 +36,33 @@ func _ready() -> void:
 	root.add_child(_label)
 
 
+func _hearts(p) -> String:
+	var out := ""
+	for i in TeacupRules.MAX_HP:
+		out += "[color=#ff5a6e]@[/color] " if i < p.hp else "[color=#553]. [/color]"
+	return out
+
+
+func _meter(p) -> String:
+	var out := ""
+	var filled := int(p.meter / 25.0)
+	for i in 4:
+		out += "[color=#ffd24a]#[/color]" if i < filled else "[color=#553]-[/color]"
+	return out
+
+
 func _process(_delta: float) -> void:
+	# Intro stage: same hearts and meter, no boss bar.
+	if intro != null and is_instance_valid(intro):
+		_boss_bg.visible = false
+		_boss_bar.visible = false
+		var ip = intro.player
+		if ip != null and is_instance_valid(ip):
+			_label.text = ("[font_size=30]%s   super %s[/font_size]\n"
+					+ "[center][font_size=22]reach the golden marker[/font_size][/center]") % [
+					_hearts(ip), _meter(ip)]
+		return
+
 	if stage == null or not is_instance_valid(stage):
 		return
 
@@ -53,14 +80,8 @@ func _process(_delta: float) -> void:
 	if p == null or not is_instance_valid(p):
 		return
 
-	var hearts := ""
-	for i in TeacupRules.MAX_HP:
-		hearts += "[color=#ff5a6e]@[/color] " if i < p.hp else "[color=#553]. [/color]"
-
-	var meter_blocks := ""
-	var filled := int(p.meter / 25.0)
-	for i in 4:
-		meter_blocks += "[color=#ffd24a]#[/color]" if i < filled else "[color=#553]-[/color]"
+	var hearts := _hearts(p)
+	var meter_blocks := _meter(p)
 
 	var boss_label := ""
 	if b != null and is_instance_valid(b):

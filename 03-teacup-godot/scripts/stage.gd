@@ -15,6 +15,7 @@ var player: TeacupPlayer
 var boss: TeacupBoss
 var boss_order := [TeacupRules.Boss.BOTTLECAP, TeacupRules.Boss.GRAMOPHONE,
 		TeacupRules.Boss.TEAPOT]
+var start_index := 0
 var boss_index := 0
 var deaths := 0
 var grades: Array[String] = []
@@ -24,6 +25,7 @@ var _retry_timer := 0.0
 
 
 func _ready() -> void:
+	boss_index = clampi(start_index, 0, boss_order.size() - 1)
 	_build_arena()
 	_build_camera()
 	player = TeacupPlayer.new()

@@ -6,6 +6,7 @@ func _init() -> void:
 	_write("res://scripts/stage_root.gd", "StageRoot", "Node3D", "res://scenes/stage.tscn")
 	_write("res://scripts/main_menu.gd", "MainMenu", "Control", "res://scenes/main_menu.tscn")
 	_write("res://tests/sim_run.gd", "Sim", "Node", "res://scenes/sim.tscn")
+	_write("res://tests/sim_intro.gd", "SimIntro", "Node", "res://scenes/sim_intro.tscn")
 	quit(0)
 
 
