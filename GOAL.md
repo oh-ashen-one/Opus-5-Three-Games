@@ -122,7 +122,7 @@ will be retries — that's 10+ minutes.
 ### Tech notes
 3D scene with a near-orthographic camera on a fixed rail. Bosses as hierarchical state machines with
 data-driven attack tables — unit test the state machines, playtest the feel. Blender-authored boss meshes,
-textures from the art pipeline below.
+textures from the asset pipeline below.
 
 ---
 
@@ -135,8 +135,8 @@ Full detail in `docs/ART-PIPELINE.md`.
    nothing else.** `tools/artgen/gen.sh <game-dir> <asset-id> "<prompt>"`. Verified working.
 2. **Humanoid characters + animation** — solved per game, see below.
 3. **Meshes** → headless Blender scripts in `tools/blender/`, textured with the images from step 1.
-4. **Audio** → synthesized with numpy/scipy via `tools/audiogen/synth.py`. No sample packs, no
-   copyrighted tracks.
+4. **Audio** → synthesized with `tools/audiogen/synth.py` (numpy only, so it runs on both machines).
+   No sample packs, no copyrighted tracks.
 5. **Every asset** gets a `assets/manifest.json` entry (prompt/script, path, sha256). Binaries stay
    gitignored; `tools/artgen/rebuild.sh` regenerates from the manifest.
 
