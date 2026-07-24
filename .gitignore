@@ -51,3 +51,7 @@ export_presets.cfg
 # Keep placeholder + manifest files even though the rules above are broad.
 !.gitkeep
 !**/assets/manifest.json
+
+# Python
+__pycache__/
+*.pyc
