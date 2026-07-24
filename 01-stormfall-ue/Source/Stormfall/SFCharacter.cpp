@@ -7,6 +7,9 @@
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "InputAction.h"
+#include "InputMappingContext.h"
+#include "InputModifiers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -49,11 +52,72 @@ ASFCharacter::ASFCharacter()
 	FollowCamera->FieldOfView = 90.f;
 }
 
+namespace
+{
+	/** Create a named input action of a given value type, owned by Outer. */
+	UInputAction* MakeAction(UObject* Outer, const TCHAR* Name, EInputActionValueType Type)
+	{
+		UInputAction* Action = NewObject<UInputAction>(Outer, Name);
+		Action->ValueType = Type;
+		return Action;
+	}
+}
+
+void ASFCharacter::BuildDefaultInput()
+{
+	if (DefaultMappingContext)
+	{
+		return;
+	}
+
+	MoveAction = MakeAction(this, TEXT("IA_Move"), EInputActionValueType::Axis2D);
+	LookAction = MakeAction(this, TEXT("IA_Look"), EInputActionValueType::Axis2D);
+	JumpAction = MakeAction(this, TEXT("IA_Jump"), EInputActionValueType::Boolean);
+	SprintAction = MakeAction(this, TEXT("IA_Sprint"), EInputActionValueType::Boolean);
+	CrouchAction = MakeAction(this, TEXT("IA_Crouch"), EInputActionValueType::Boolean);
+
+	DefaultMappingContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Default"));
+
+	// WASD into a single Axis2D. Enhanced Input has no 2D composite primitive, so
+	// each key is swizzled/negated into the right component: W is +Y by default,
+	// S negates it, and A/D swizzle Y into X (A additionally negated).
+	auto* Negate = NewObject<UInputModifierNegate>(DefaultMappingContext);
+	auto* SwizzleYXZ = NewObject<UInputModifierSwizzleAxis>(DefaultMappingContext);
+	SwizzleYXZ->Order = EInputAxisSwizzle::YXZ;
+	auto* NegateForA = NewObject<UInputModifierNegate>(DefaultMappingContext);
+
+	DefaultMappingContext->MapKey(MoveAction, EKeys::W);
+	DefaultMappingContext->MapKey(MoveAction, EKeys::S).Modifiers.Add(Negate);
+	{
+		FEnhancedActionKeyMapping& D = DefaultMappingContext->MapKey(MoveAction, EKeys::D);
+		D.Modifiers.Add(SwizzleYXZ);
+	}
+	{
+		FEnhancedActionKeyMapping& A = DefaultMappingContext->MapKey(MoveAction, EKeys::A);
+		A.Modifiers.Add(NegateForA);
+		A.Modifiers.Add(SwizzleYXZ);
+	}
+
+	// Mouse look. Screen Y is inverted relative to pitch, so negate the Y component.
+	{
+		auto* NegateY = NewObject<UInputModifierNegate>(DefaultMappingContext);
+		NegateY->bX = false;
+		NegateY->bY = true;
+		NegateY->bZ = false;
+		DefaultMappingContext->MapKey(LookAction, EKeys::Mouse2D).Modifiers.Add(NegateY);
+	}
+
+	DefaultMappingContext->MapKey(JumpAction, EKeys::SpaceBar);
+	DefaultMappingContext->MapKey(SprintAction, EKeys::LeftShift);
+	DefaultMappingContext->MapKey(CrouchAction, EKeys::LeftControl);
+}
+
 void ASFCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
 	Health = MaxHealth;
+	BuildDefaultInput();
 
 	if (const APlayerController* PC = Cast<APlayerController>(Controller))
 	{
@@ -161,6 +225,10 @@ void ASFCharacter::CrouchToggle(const FInputActionValue& /*Value*/)
 void ASFCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	// SetupPlayerInputComponent can run before BeginPlay on possession, so the
+	// actions must exist by now rather than being built only in BeginPlay.
+	BuildDefaultInput();
 
 	UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	if (!Input)

@@ -53,23 +53,30 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stormfall|Camera")
 	TObjectPtr<UCameraComponent> FollowCamera;
 
-	// ── Input assets (assigned in a data-only Blueprint subclass) ────────────
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stormfall|Input")
+	/**
+	 * Builds the mapping context and actions in code rather than loading .uasset
+	 * input assets. Keeps input config reviewable in the diff and keeps binaries
+	 * out of the repo, at the cost of not being editable from the editor UI.
+	 */
+	void BuildDefaultInput();
+
+	// ── Input (constructed by BuildDefaultInput) ─────────────────────────────
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stormfall|Input")
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
 	TObjectPtr<UInputAction> MoveAction;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stormfall|Input")
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
 	TObjectPtr<UInputAction> LookAction;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stormfall|Input")
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
 	TObjectPtr<UInputAction> JumpAction;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stormfall|Input")
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
 	TObjectPtr<UInputAction> SprintAction;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stormfall|Input")
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Stormfall|Input")
 	TObjectPtr<UInputAction> CrouchAction;
 
 	// ── Movement tuning ──────────────────────────────────────────────────────

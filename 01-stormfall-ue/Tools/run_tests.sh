@@ -15,8 +15,19 @@ LOG="${TMPDIR:-/tmp}/sf_tests.log"
 
 if [[ "${1:-}" != "--no-build" ]]; then
   echo "==> building StormfallEditor"
-  "$UE/Build/BatchFiles/Mac/Build.sh" StormfallEditor Mac Development -project="$PROJECT" \
-    | grep -E "error|warning:|Result:|Total execution" || true
+  BUILD_LOG="${TMPDIR:-/tmp}/sf_build.log"
+  # Pipe to a file rather than through grep, so the build's exit status survives
+  # instead of being replaced by grep's. A failed build must not fall through to
+  # "tests passed" against a stale binary.
+  set +e
+  "$UE/Build/BatchFiles/Mac/Build.sh" StormfallEditor Mac Development -project="$PROJECT" > "$BUILD_LOG" 2>&1
+  BUILD_STATUS=$?
+  set -e
+  grep -E "error|warning:|Result:|Total execution" "$BUILD_LOG" || true
+  if [[ $BUILD_STATUS -ne 0 ]]; then
+    echo "==> BUILD FAILED (exit $BUILD_STATUS) — not running tests. Full log: $BUILD_LOG"
+    exit $BUILD_STATUS
+  fi
 fi
 
 echo "==> running tests"
