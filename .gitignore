@@ -1,3 +1,53 @@
-# ignore everything by default (repo exists for Claude cloud sessions)
-*
-!.gitignore
+# ─── Binaries are NOT committed ───────────────────────────────────────────
+# Generated art/audio/meshes live only on disk. Each game's assets/manifest.json
+# records the prompt + output path + sha256 so tools/artgen/rebuild.sh can
+# regenerate everything from a fresh clone.
+*.png
+*.jpg
+*.jpeg
+*.tga
+*.exr
+*.hdr
+*.psd
+*.fbx
+*.obj
+*.glb
+*.gltf
+*.blend
+*.blend1
+*.wav
+*.mp3
+*.ogg
+*.mp4
+*.mov
+
+# ─── Unreal Engine ────────────────────────────────────────────────────────
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+Build/
+*.uasset
+*.umap
+*.xcworkspace/
+*.xcodeproj/
+.vs/
+.vscode/
+
+# ─── Godot 4 ──────────────────────────────────────────────────────────────
+.godot/
+.import/
+export_presets.cfg
+*.translation
+
+# ─── macOS / editors / misc ───────────────────────────────────────────────
+.DS_Store
+._*
+*.log
+*.tmp
+.idea/
+
+# ─── Escape hatches ───────────────────────────────────────────────────────
+# Keep placeholder + manifest files even though the rules above are broad.
+!.gitkeep
+!**/assets/manifest.json
