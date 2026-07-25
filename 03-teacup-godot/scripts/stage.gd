@@ -36,38 +36,46 @@ func _ready() -> void:
 
 
 func _build_arena() -> void:
-	_solid(Vector3(0, -40, 0), Vector3(3400, 80, 600), Color(0.35, 0.28, 0.24))
+	_solid(Vector3(0, -40, 0), Vector3(3400, 80, 600), Color(0.72, 0.60, 0.45))
 	# Platforms give the fight vertical options.
-	_solid(Vector3(-800, 260, 0), Vector3(500, 40, 400), Color(0.42, 0.33, 0.27))
-	_solid(Vector3(800, 260, 0), Vector3(500, 40, 400), Color(0.42, 0.33, 0.27))
-	_solid(Vector3(0, 470, 0), Vector3(420, 40, 400), Color(0.42, 0.33, 0.27))
+	_solid(Vector3(-800, 260, 0), Vector3(500, 40, 400), Color(0.80, 0.68, 0.52))
+	_solid(Vector3(800, 260, 0), Vector3(500, 40, 400), Color(0.80, 0.68, 0.52))
+	_solid(Vector3(0, 470, 0), Vector3(420, 40, 400), Color(0.80, 0.68, 0.52))
 	# Invisible side walls keep the player on stage.
 	_solid(Vector3(-ARENA_HALF_WIDTH - 120, 400, 0), Vector3(120, 1200, 400),
-			Color(0.2, 0.16, 0.15))
+			Color(0.45, 0.37, 0.30))
 	_solid(Vector3(ARENA_HALF_WIDTH + 120, 400, 0), Vector3(120, 1200, 400),
-			Color(0.2, 0.16, 0.15))
+			Color(0.45, 0.37, 0.30))
 
 	# Backdrop: a deep plane so the world reads as 3D rather than a flat cutout.
-	_solid(Vector3(0, 600, -400), Vector3(4000, 1600, 60), Color(0.20, 0.17, 0.22))
+	_solid(Vector3(0, 600, -400), Vector3(4000, 1600, 60), Color(0.56, 0.49, 0.42))
 
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-42, 28, 0)
-	sun.light_energy = 1.25
+	sun.rotation_degrees = Vector3(-52, 24, 0)
+	sun.light_energy = 1.5
+	sun.light_color = Color(1.0, 0.94, 0.82)
 	sun.shadow_enabled = true
+	# Softened: hard black shadows fought the aged-film look.
+	sun.directional_shadow_blend_splits = true
+	sun.shadow_bias = 0.04
 	add_child(sun)
 
 	var env := WorldEnvironment.new()
 	var e := Environment.new()
 	e.background_mode = Environment.BG_COLOR
-	# Sepia grade, for the 1930s look.
-	e.background_color = Color(0.16, 0.13, 0.11)
+	# Warm parchment rather than near-black. The first render was a murky grey
+	# void with pure-black shadow blobs -- ambient was far too low for a style
+	# that is supposed to read as aged film, not as a cave.
+	e.background_color = Color(0.62, 0.55, 0.44)
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.55, 0.47, 0.38)
-	e.ambient_light_energy = 0.7
+	e.ambient_light_color = Color(0.86, 0.78, 0.64)
+	e.ambient_light_energy = 1.6
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	e.tonemap_exposure = 1.15
 	e.adjustment_enabled = true
-	e.adjustment_saturation = 0.55
-	e.adjustment_contrast = 1.15
+	e.adjustment_saturation = 0.42
+	e.adjustment_contrast = 1.08
+	e.adjustment_brightness = 1.05
 	env.environment = e
 	add_child(env)
 

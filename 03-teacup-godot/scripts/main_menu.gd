@@ -16,15 +16,15 @@ static var invert_y := false
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := ColorRect.new()
 	bg.color = Color(0.05, 0.06, 0.08)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
 	_label = RichTextLabel.new()
 	_label.bbcode_enabled = true
-	_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_label)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh()

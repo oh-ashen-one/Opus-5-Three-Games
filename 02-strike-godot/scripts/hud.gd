@@ -28,32 +28,35 @@ func _ready() -> void:
 
 func _build() -> void:
 	_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 
 	_crosshair = Control.new()
-	_crosshair.set_anchors_preset(Control.PRESET_CENTER)
+	_crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_crosshair)
 	_crosshair.draw.connect(_draw_crosshair)
 
-	_score_label = _make_label(Vector2(0, 16), 28, HORIZONTAL_ALIGNMENT_CENTER)
-	_score_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_timer_label = _make_label(Vector2(0, 52), 22, HORIZONTAL_ALIGNMENT_CENTER)
-	_timer_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-
-	_health_label = _make_label(Vector2(40, -80), 26)
-	_health_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_money_label = _make_label(Vector2(40, -120), 20)
-	_money_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_ammo_label = _make_label(Vector2(-220, -80), 26)
-	_ammo_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	_status_label = _make_label(Vector2(0, -160), 24, HORIZONTAL_ALIGNMENT_CENTER)
-	_status_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	# The preset MUST be applied before the offset: set_anchors_preset resets
+	# offsets, so setting position first silently discarded it and pushed every
+	# label off-screen. Only the score and timer were visible, in the top-left
+	# corner, with health/ammo/money nowhere at all.
+	_score_label = _make_label(Control.PRESET_CENTER_TOP, Vector2(-120, 14),
+			Vector2(240, 40), 28, HORIZONTAL_ALIGNMENT_CENTER)
+	_timer_label = _make_label(Control.PRESET_CENTER_TOP, Vector2(-120, 50),
+			Vector2(240, 34), 22, HORIZONTAL_ALIGNMENT_CENTER)
+	_health_label = _make_label(Control.PRESET_BOTTOM_LEFT, Vector2(40, -70),
+			Vector2(460, 40), 26)
+	_money_label = _make_label(Control.PRESET_BOTTOM_LEFT, Vector2(40, -112),
+			Vector2(300, 34), 22)
+	_ammo_label = _make_label(Control.PRESET_BOTTOM_RIGHT, Vector2(-420, -70),
+			Vector2(380, 40), 26, HORIZONTAL_ALIGNMENT_RIGHT)
+	_status_label = _make_label(Control.PRESET_CENTER_BOTTOM, Vector2(-350, -150),
+			Vector2(700, 40), 24, HORIZONTAL_ALIGNMENT_CENTER)
 
 	_menu_panel = PanelContainer.new()
-	_menu_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_menu_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	_menu_panel.position = Vector2(-260, -180)
 	_menu_panel.custom_minimum_size = Vector2(520, 360)
 	_menu_panel.visible = false
@@ -65,16 +68,21 @@ func _build() -> void:
 	_menu_panel.add_child(_menu_label)
 
 
-func _make_label(offset: Vector2, size: int,
+func _make_label(preset: int, offset: Vector2, box: Vector2, size: int,
 		align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
 	var l := Label.new()
-	l.position = offset
+	_root.add_child(l)
+	l.set_anchors_and_offsets_preset(preset)
+	# Explicit offsets after the preset: the preset zeroes them.
+	l.offset_left = offset.x
+	l.offset_top = offset.y
+	l.offset_right = offset.x + box.x
+	l.offset_bottom = offset.y + box.y
 	l.horizontal_alignment = align
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", Color(0.95, 0.95, 0.92))
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	l.add_theme_constant_override("outline_size", 4)
-	_root.add_child(l)
 	return l
 
 

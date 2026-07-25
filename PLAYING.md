@@ -3,6 +3,9 @@
 Everything runs on the Mac Studio (`midir@192.168.1.157`), repo at
 `~/dev/Opus-5-Three-Games`.
 
+**Quickest start:** double-click the files in `launchers/` —
+`Play STORMFALL.command`, `Play STRIKE PROTOCOL.command`, `Play TEACUP.command`.
+
 ---
 
 ## 1. STORMFALL — Unreal Engine 5.8
@@ -30,9 +33,13 @@ Launching the *game* (rather than the editor) now boots to `Lvl_MainMenu`; choos
 Maps: `Lvl_MainMenu` (boot), `Lvl_Island` (the match — 8 POIs, 15 bots, storm),
 `Lvl_Greybox` (movement tuning, drop-test ledges).
 
-⚠️ **The packaged `.app` does not launch** — see `01-stormfall-ue/RUNNING.md`.
-It is a path-layout problem specific to this machine, not a game bug. Editor
-play is unaffected.
+⚠️ **The packaged `.app` does not launch.** UE 5.8's macOS staging computes the
+project path relative to the binary assuming it lives at `<Project>/Binaries/Mac`,
+but a staged `.app` puts it five levels deep inside the bundle. The derived path
+is wrong wherever the `.app` is placed — verified by cooking from three separate
+locations, including under `/Users/Shared` alongside the engine. This is an engine
+staging defect, not a game bug, and **editor play is unaffected**. Details in
+`01-stormfall-ue/RUNNING.md`.
 
 ---
 
@@ -133,19 +140,38 @@ game runs. STRIKE plays a full 12-round match with real attrition and bomb
 plants. TEACUP defeats all three bosses through all three phases. STORMFALL's
 building, storm, loot, harvesting and combat all work in-world.
 
-**Not verified — needs hands on a keyboard:**
+**Frame rate — now measured**, rendering on the Studio's M3 Ultra at 1280x720:
+
+| Game | Mean FPS | Min FPS |
+|---|---|---|
+| STRIKE PROTOCOL | 117.2 | 109 |
+| TEACUP | 118.7 | 115 |
+
+Both roughly double the 60 fps target. STORMFALL is still unmeasured -- its
+`-game` path cannot be driven on this machine.
+
+Frames are rendered and inspected via `tests/capture.gd` in each Godot project:
+
+```bash
+/Applications/Godot.app/Contents/MacOS/Godot --path <game> res://scenes/capture.tscn
+# writes PNGs to ~/Library/Application Support/Godot/app_userdata/<NAME>/
+```
+
+**Still not verified — needs hands on a keyboard:**
 
 - Whether any of it *feels* good. That is the whole question and no test answers it.
-- Frame rate. Nothing has been profiled; the 60 fps target is unmeasured.
 - Whether the bots are fun opponents rather than merely functional ones.
 - STORMFALL end-to-end: no human has played a match to Victory Royale.
 
 **Known tuning gaps:**
 
-- STRIKE: bomb plants are rare (0-1 per 12-round match across runs). The mechanic
-  works end to end -- plant, timer, explode, defuse -- but bots trade too readily
-  to survive to the plant, so most rounds end by elimination.
+- STRIKE: bomb plants happen but are uncommon. Ts now reach the sites (the
+  closest a T got went from 1764 units to 85, against a 500-unit plant radius)
+  and the whole plant/defuse loop works, but most rounds still end by
+  elimination. Note the simulation's player stands still, so its scoreline is
+  4 T bots vs 5 CT bots -- a human fills that slot.
 - STRIKE: bots hold angles and shoot, but have no utility usage (smokes and
   flashes exist as rules, not as bot behaviour).
 - TEACUP: bosses are spheres. The rubber-hose look is in the lighting, grade and
   palette, not yet in the geometry.
+- STORMFALL: the packaged .app cannot be made to launch -- see below.

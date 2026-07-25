@@ -33,14 +33,14 @@ func _build() -> void:
 	]
 	for seg in segments:
 		_solid(Vector3(seg.x + seg.y * 0.5, -40, 0), Vector3(seg.y, 80, 600),
-				Color(0.36, 0.28, 0.23))
+				Color(0.72, 0.60, 0.45))
 
 	# Platforms to climb and shoot from.
-	_solid(Vector3(-500, 260, 0), Vector3(360, 40, 400), Color(0.44, 0.34, 0.28))
-	_solid(Vector3(500, 430, 0), Vector3(360, 40, 400), Color(0.44, 0.34, 0.28))
-	_solid(Vector3(1500, 300, 0), Vector3(320, 40, 400), Color(0.44, 0.34, 0.28))
-	_solid(Vector3(2500, 380, 0), Vector3(320, 40, 400), Color(0.44, 0.34, 0.28))
-	_solid(Vector3(3300, 300, 0), Vector3(320, 40, 400), Color(0.44, 0.34, 0.28))
+	_solid(Vector3(-500, 260, 0), Vector3(360, 40, 400), Color(0.80, 0.68, 0.52))
+	_solid(Vector3(500, 430, 0), Vector3(360, 40, 400), Color(0.80, 0.68, 0.52))
+	_solid(Vector3(1500, 300, 0), Vector3(320, 40, 400), Color(0.80, 0.68, 0.52))
+	_solid(Vector3(2500, 380, 0), Vector3(320, 40, 400), Color(0.80, 0.68, 0.52))
+	_solid(Vector3(3300, 300, 0), Vector3(320, 40, 400), Color(0.80, 0.68, 0.52))
 
 	# Turrets: stationary shooters that force movement rather than camping.
 	for x in [-200.0, 900.0, 1900.0, 2800.0, 3600.0]:
@@ -62,13 +62,17 @@ func _build() -> void:
 	goal.position = Vector3(GOAL_X, 250, 0)
 	add_child(goal)
 
-	_solid(Vector3(-1900, 400, 0), Vector3(120, 1400, 400), Color(0.2, 0.16, 0.15))
-	_solid(Vector3(0, 700, -400), Vector3(8000, 1800, 60), Color(0.20, 0.17, 0.22))
+	_solid(Vector3(-1900, 400, 0), Vector3(120, 1400, 400), Color(0.45, 0.37, 0.30))
+	_solid(Vector3(0, 700, -400), Vector3(8000, 1800, 60), Color(0.56, 0.49, 0.42))
 
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-44, 24, 0)
-	sun.light_energy = 1.2
+	sun.rotation_degrees = Vector3(-52, 24, 0)
+	sun.light_energy = 1.5
+	sun.light_color = Color(1.0, 0.94, 0.82)
 	sun.shadow_enabled = true
+	# Softened: hard black shadows fought the aged-film look.
+	sun.directional_shadow_blend_splits = true
+	sun.shadow_bias = 0.04
 	add_child(sun)
 
 	var env := WorldEnvironment.new()

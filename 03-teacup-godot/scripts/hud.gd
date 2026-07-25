@@ -13,7 +13,7 @@ var _boss_bg: ColorRect
 func _ready() -> void:
 	layer = 10
 	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
@@ -31,7 +31,7 @@ func _ready() -> void:
 
 	_label = RichTextLabel.new()
 	_label.bbcode_enabled = true
-	_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_label)
 
