@@ -14,7 +14,10 @@ maps, or likenesses are used.
 
 ## Start here
 
-- **[`GOAL.md`](GOAL.md)** — the full build spec. Paste it into a fresh Claude Code session to begin.
+- **[`START-HERE.md`](START-HERE.md)** — read this first in a new session: how to run
+  and verify all three games, what is and isn't verified, and the traps in this setup.
+- **[`PLAYING.md`](PLAYING.md)** — controls and launchers.
+- **[`GOAL.md`](GOAL.md)** — the original build spec.
 - **[`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md)** — verified machines, engine paths, toolchain versions.
 - **[`docs/ART-PIPELINE.md`](docs/ART-PIPELINE.md)** — how assets are generated and regenerated.
 
