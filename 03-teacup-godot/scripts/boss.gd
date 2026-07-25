@@ -23,9 +23,11 @@ var is_dead := false
 
 var _timer := 0.0
 var _attack := 0
+var _bob := 0.0
 var _rng := RandomNumberGenerator.new()
 var _mesh: MeshInstance3D
 var _hurtbox: Area3D
+var _features: Array[MeshInstance3D] = []
 var _base_colour := Color(0.85, 0.35, 0.3)
 
 
@@ -45,17 +47,18 @@ func _build() -> void:
 		TeacupRules.Boss.GRAMOPHONE: _base_colour = Color(0.55, 0.35, 0.72)
 		TeacupRules.Boss.TEAPOT: _base_colour = Color(0.30, 0.55, 0.48)
 
+	# Each boss gets a silhouette rather than a sphere. Rubber-hose characters
+	# read by shape first, and three identical balls in different colours is not
+	# three bosses.
 	_mesh = MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = 150.0
-	mesh.height = 300.0
-	_mesh.mesh = mesh
+	_mesh.mesh = _body_mesh()
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = _base_colour
-	mat.roughness = 0.6
+	mat.roughness = 0.55
 	_mesh.material_override = mat
 	_mesh.position = Vector3(0, 170, 0)
 	add_child(_mesh)
+	_build_features()
 
 	_hurtbox = Area3D.new()
 	_hurtbox.add_to_group("boss_hurtbox")
@@ -66,6 +69,97 @@ func _build() -> void:
 	shape.position = Vector3(0, 170, 0)
 	_hurtbox.add_child(shape)
 	add_child(_hurtbox)
+
+
+## Primary body shape per boss.
+func _body_mesh() -> Mesh:
+	match boss_id:
+		TeacupRules.Boss.BOTTLECAP:
+			# A squat, wide disc — a bottlecap on its side.
+			var cap := CylinderMesh.new()
+			cap.top_radius = 170.0
+			cap.bottom_radius = 170.0
+			cap.height = 110.0
+			return cap
+		TeacupRules.Boss.GRAMOPHONE:
+			# A cone: the horn.
+			var horn := CylinderMesh.new()
+			horn.top_radius = 200.0
+			horn.bottom_radius = 45.0
+			horn.height = 300.0
+			return horn
+		_:
+			# Teapot: a rounded body, with spout and handle added as features.
+			var body := SphereMesh.new()
+			body.radius = 150.0
+			body.height = 260.0
+			return body
+
+
+## Bolt-on details that make the silhouette readable at a glance.
+func _build_features() -> void:
+	match boss_id:
+		TeacupRules.Boss.BOTTLECAP:
+			# Crimped ridges around the rim.
+			for i in 12:
+				var angle := TAU * float(i) / 12.0
+				var ridge := _feature(BoxMesh.new(), Vector3(28, 90, 28),
+						_base_colour.darkened(0.25))
+				ridge.position = Vector3(cos(angle) * 168.0, 170.0, sin(angle) * 168.0)
+				ridge.rotation.y = -angle
+			_rotate_body(Vector3(0, 0, 90))
+		TeacupRules.Boss.GRAMOPHONE:
+			# Crank arm and a turntable base.
+			var arm := _feature(CylinderMesh.new(), Vector3(24, 190, 24),
+					_base_colour.lightened(0.2))
+			arm.position = Vector3(120, 90, 0)
+			arm.rotation.z = deg_to_rad(28)
+			var base := _feature(CylinderMesh.new(), Vector3(230, 40, 230),
+					_base_colour.darkened(0.3))
+			base.position = Vector3(0, 20, 0)
+			_rotate_body(Vector3(0, 0, -90))
+		_:
+			# Spout, handle and lid.
+			var spout := _feature(CylinderMesh.new(), Vector3(46, 170, 46),
+					_base_colour.lightened(0.12))
+			spout.position = Vector3(-150, 190, 0)
+			spout.rotation.z = deg_to_rad(38)
+			var handle := _feature(TorusMesh.new(), Vector3(1, 1, 1),
+					_base_colour.lightened(0.12))
+			handle.position = Vector3(150, 190, 0)
+			handle.rotation.y = deg_to_rad(90)
+			var lid := _feature(SphereMesh.new(), Vector3(70, 60, 70),
+					_base_colour.lightened(0.25))
+			lid.position = Vector3(0, 300, 0)
+
+
+func _feature(mesh: Mesh, scale: Vector3, colour: Color) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	if mesh is CylinderMesh:
+		mesh.top_radius = scale.x * 0.5
+		mesh.bottom_radius = scale.x * 0.5
+		mesh.height = scale.y
+	elif mesh is BoxMesh:
+		mesh.size = scale
+	elif mesh is SphereMesh:
+		mesh.radius = scale.x * 0.5
+		mesh.height = scale.y
+	elif mesh is TorusMesh:
+		mesh.inner_radius = 55.0
+		mesh.outer_radius = 95.0
+	node.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = colour
+	mat.roughness = 0.55
+	node.material_override = mat
+	add_child(node)
+	_features.append(node)
+	return node
+
+
+func _rotate_body(degrees: Vector3) -> void:
+	if _mesh:
+		_mesh.rotation_degrees = degrees
 
 
 func apply_damage(amount: float) -> void:
@@ -83,6 +177,10 @@ func apply_damage(amount: float) -> void:
 		if _mesh:
 			var mat: StandardMaterial3D = _mesh.material_override
 			mat.albedo_color = _base_colour.lerp(Color(1, 1, 1), 0.22 * float(phase))
+		for f in _features:
+			if is_instance_valid(f):
+				var fm: StandardMaterial3D = f.material_override
+				fm.albedo_color = fm.albedo_color.lerp(Color(1, 1, 1), 0.18)
 
 	if health <= 0.0:
 		is_dead = true
@@ -102,6 +200,12 @@ func _enter_state(next: int, duration: float) -> void:
 func _physics_process(delta: float) -> void:
 	if is_dead:
 		return
+
+	# Idle bob: a boss that never moves reads as scenery.
+	_bob += delta
+	if _mesh:
+		_mesh.position.y = 170.0 + sin(_bob * 2.2) * 14.0
+
 	_timer -= delta
 	if _timer > 0.0:
 		_tick_state(delta)

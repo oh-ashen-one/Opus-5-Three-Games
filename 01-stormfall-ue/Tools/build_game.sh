@@ -60,18 +60,33 @@ if ! otool -L "$BINARY" >/dev/null 2>&1; then
   exit 1
 fi
 
-# The staged .app has the same problem, plus its own: staging does not copy the
-# engine's ThirdParty dylibs (libtbb, libmetalirconverter, ...) into the bundle,
-# and the bundle's relative rpaths miss the engine for the same "../" reason.
-# Patch the packaged binary too, whenever one exists.
-APP_BINARY="$PROJECT_DIR/Dist/Mac/Stormfall.app/Contents/MacOS/Stormfall"
-if [[ -f "$APP_BINARY" ]]; then
-  echo "==> patching packaged app rpaths"
-  for RP in "${THIRD_PARTY_RPATHS[@]}"; do
-    install_name_tool -add_rpath "$RP" "$APP_BINARY" 2>/dev/null || true
-  done
-  codesign --force --deep --sign - --timestamp=none \
-    "$PROJECT_DIR/Dist/Mac/Stormfall.app" 2>/dev/null || true
+# ── Packaging ───────────────────────────────────────────────────────────────
+#
+# `RunUAT BuildCookRun -archive` copies ONLY Stormfall.app into the archive
+# directory and drops its siblings. That is fatal: a staged Mac build is the
+# .app PLUS sibling Engine/ and Stormfall/Content/Paks/ directories, and without
+# them the app cannot find its content, its ICU data, or its own .uproject. The
+# resulting bundle is a 400MB shell that dies at ICUInternationalization.cpp.
+#
+# The real staged build is in Saved/StagedBuilds/Mac. Copy that whole directory.
+STAGE_DIR="$PROJECT_DIR/Saved/StagedBuilds/Mac"
+DIST_DIR="$PROJECT_DIR/Dist/Mac"
+if [[ -d "$STAGE_DIR" ]]; then
+  echo "==> packaging from the staged build (app + siblings)"
+  rm -rf "$DIST_DIR"
+  mkdir -p "$PROJECT_DIR/Dist"
+  cp -R "$STAGE_DIR/" "$DIST_DIR/"
+
+  APP_BINARY="$DIST_DIR/Stormfall.app/Contents/MacOS/Stormfall"
+  if [[ -f "$APP_BINARY" ]]; then
+    echo "==> patching packaged app rpaths"
+    for RP in "${THIRD_PARTY_RPATHS[@]}"; do
+      install_name_tool -add_rpath "$RP" "$APP_BINARY" 2>/dev/null || true
+    done
+    codesign --force --deep --sign - --timestamp=none \
+      "$DIST_DIR/Stormfall.app" 2>/dev/null || true
+  fi
+  echo "==> playable build: $DIST_DIR/Stormfall.app"
 fi
 
 if [[ "${1:-}" == "--run" ]]; then

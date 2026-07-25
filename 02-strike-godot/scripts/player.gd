@@ -30,6 +30,11 @@ var carrying_bomb := false
 ## the round is live and the whole match resolves during the buy phase.
 var can_act := true
 
+## Utility loadout, and how blind we currently are (seconds remaining).
+var grenades := {StrikeGrenade.Kind.HE: 0, StrikeGrenade.Kind.SMOKE: 0,
+		StrikeGrenade.Kind.FLASH: 0}
+var flash_time := 0.0
+
 var _camera: Camera3D
 var _collider: CollisionShape3D
 var _cooldown := 0.0
@@ -45,6 +50,7 @@ var _is_walking := false
 ## identical to the player's, which was the point of sharing the class.
 var bot_wish_dir := Vector2.ZERO
 var bot_wish_speed := StrikeMovement.WALK_SPEED
+var _grenade_cooldown := 0.0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -108,6 +114,8 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_cooldown = maxf(_cooldown - delta, 0.0)
+	flash_time = maxf(flash_time - delta, 0.0)
+	_grenade_cooldown = maxf(_grenade_cooldown - delta, 0.0)
 	if _reloading > 0.0:
 		_reloading -= delta
 		if _reloading <= 0.0:
@@ -133,6 +141,13 @@ func _handle_input(delta: float) -> void:
 		try_fire()
 	if Input.is_key_pressed(KEY_R):
 		start_reload()
+
+	if Input.is_key_pressed(KEY_4):
+		throw_grenade(StrikeGrenade.Kind.HE)
+	elif Input.is_key_pressed(KEY_5):
+		throw_grenade(StrikeGrenade.Kind.SMOKE)
+	elif Input.is_key_pressed(KEY_6):
+		throw_grenade(StrikeGrenade.Kind.FLASH)
 
 	if _camera:
 		var target := CROUCH_EYE_HEIGHT if _is_crouching else EYE_HEIGHT
@@ -250,6 +265,38 @@ func _trace_shot(origin: Vector3, dir: Vector3, spec) -> void:
 		target.take_damage(damage, self)
 
 
+## Blindness from a flashbang. Additive up to the maximum.
+func apply_flash(seconds: float) -> void:
+	flash_time = maxf(flash_time, seconds)
+
+
+func is_blinded() -> bool:
+	return flash_time > 0.0
+
+
+## Throw one of the carried grenades, if we have it.
+func throw_grenade(kind: int) -> bool:
+	if not can_act or not is_alive:
+		return false
+	if grenades.get(kind, 0) <= 0 or _grenade_cooldown > 0.0:
+		return false
+
+	grenades[kind] -= 1
+	_grenade_cooldown = 0.8
+
+	var g := StrikeGrenade.new()
+	g.kind = kind
+	g.thrower = self
+	var forward := -global_transform.basis.z
+	if _camera:
+		forward = -_camera.global_transform.basis.z
+	# Thrown up and out, so it arcs rather than dropping at your feet.
+	g.velocity = forward * 1250.0 + Vector3(0, 420.0, 0)
+	get_parent().add_child(g)
+	g.global_position = global_position + Vector3(0, 140, 0) + forward * 60.0
+	return true
+
+
 func take_damage(amount: float, attacker: Node) -> void:
 	if not is_alive or amount <= 0.0:
 		return
@@ -274,6 +321,8 @@ func reset_for_round(spawn: Vector3, new_team: int) -> void:
 	shots_fired = 0
 	_reloading = 0.0
 	_cooldown = 0.0
+	flash_time = 0.0
+	_grenade_cooldown = 0.0
 	velocity = Vector3.ZERO
 	global_position = spawn
 	carrying_bomb = false

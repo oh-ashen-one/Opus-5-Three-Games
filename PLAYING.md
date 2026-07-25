@@ -33,13 +33,14 @@ Launching the *game* (rather than the editor) now boots to `Lvl_MainMenu`; choos
 Maps: `Lvl_MainMenu` (boot), `Lvl_Island` (the match — 8 POIs, 15 bots, storm),
 `Lvl_Greybox` (movement tuning, drop-test ledges).
 
-⚠️ **The packaged `.app` does not launch.** UE 5.8's macOS staging computes the
-project path relative to the binary assuming it lives at `<Project>/Binaries/Mac`,
-but a staged `.app` puts it five levels deep inside the bundle. The derived path
-is wrong wherever the `.app` is placed — verified by cooking from three separate
-locations, including under `/Users/Shared` alongside the engine. This is an engine
-staging defect, not a game bug, and **editor play is unaffected**. Details in
-`01-stormfall-ue/RUNNING.md`.
+**Packaged build (no editor needed):** `launchers/Play STORMFALL (packaged).command`,
+or `01-stormfall-ue/Dist/Mac/Stormfall.app`.
+
+⚠️ The `.app` must stay beside its sibling `Engine/` and `Stormfall/` folders.
+`RunUAT -archive` copies only the `.app` and drops those siblings, producing a
+400 MB shell that dies at `ICUInternationalization.cpp`. `Tools/build_game.sh`
+now packages the whole staged directory instead. Moving the `.app` on its own
+will re-break it.
 
 ---
 
@@ -60,6 +61,7 @@ Or open the project in Godot and press F5. Starts at the main menu.
 | **LMB** | Fire |
 | `R` | Reload |
 | `B` | Buy menu (during freeze time) — then `1`-`8` to purchase |
+| `4` / `5` / `6` | Throw HE / smoke / flash |
 | `Esc` | Pause |
 | Arrows + `Enter` | Menus |
 
@@ -147,8 +149,9 @@ building, storm, loot, harvesting and combat all work in-world.
 | STRIKE PROTOCOL | 117.2 | 109 |
 | TEACUP | 118.7 | 115 |
 
-Both roughly double the 60 fps target. STORMFALL is still unmeasured -- its
-`-game` path cannot be driven on this machine.
+Both roughly double the 60 fps target. STORMFALL now has a working packaged
+build that boots the engine cleanly, but its framerate is still unmeasured --
+it needs a human at the keyboard to load a match.
 
 Frames are rendered and inspected via `tests/capture.gd` in each Godot project:
 
@@ -170,8 +173,4 @@ Frames are rendered and inspected via `tests/capture.gd` in each Godot project:
   and the whole plant/defuse loop works, but most rounds still end by
   elimination. Note the simulation's player stands still, so its scoreline is
   4 T bots vs 5 CT bots -- a human fills that slot.
-- STRIKE: bots hold angles and shoot, but have no utility usage (smokes and
-  flashes exist as rules, not as bot behaviour).
-- TEACUP: bosses are spheres. The rubber-hose look is in the lighting, grade and
-  palette, not yet in the geometry.
-- STORMFALL: the packaged .app cannot be made to launch -- see below.
+- STRIKE: bomb plants happen but remain uncommon; most rounds end by elimination.

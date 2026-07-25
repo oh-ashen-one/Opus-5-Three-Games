@@ -27,6 +27,7 @@ var _enemy: StrikePlayer = null
 var _reaction_timer := 0.0
 var _think_timer := 0.0
 var _hold_angle := Vector3.ZERO
+var _used_utility := false
 var _bot_rng := RandomNumberGenerator.new()
 
 
@@ -82,7 +83,25 @@ func _physics_process(delta: float) -> void:
 
 
 func _think() -> void:
+	# A blinded bot cannot see anything. Same rule as the player.
+	if is_blinded():
+		_enemy = null
+		bot_wish_dir = Vector2.ZERO
+		return
+
 	_enemy = _find_visible_enemy()
+
+	# Utility on the approach: smoke to cross, flash to enter.
+	if _enemy == null and state == State.PUSH and not _path.is_empty():
+		var to_objective := global_position.distance_to(target_position)
+		if to_objective < 1600.0 and to_objective > 700.0 and not _used_utility:
+			_used_utility = true
+			if grenades.get(StrikeGrenade.Kind.SMOKE, 0) > 0:
+				_face(target_position)
+				throw_grenade(StrikeGrenade.Kind.SMOKE)
+			elif grenades.get(StrikeGrenade.Kind.FLASH, 0) > 0:
+				_face(target_position)
+				throw_grenade(StrikeGrenade.Kind.FLASH)
 
 	if _enemy != null:
 		# Reaction delay scaled by difficulty, so they are beatable by being
@@ -198,11 +217,22 @@ func _find_visible_enemy() -> StrikePlayer:
 
 		# Line of sight: walls and boxes genuinely block vision, which is what
 		# makes holding an angle and using cover meaningful.
-		var query := PhysicsRayQueryParameters3D.create(
-				eye, other.global_position + Vector3(0, 140, 0))
+		var target_eye: Vector3 = other.global_position + Vector3(0, 140, 0)
+		var query := PhysicsRayQueryParameters3D.create(eye, target_eye)
 		query.exclude = [get_rid(), other.get_rid()]
 		var hit := space.intersect_ray(query)
 		if not hit.is_empty():
+			continue
+
+		# Smoke blocks bots exactly as it blocks the player. Without this,
+		# utility is a particle effect and the bots play the same game with or
+		# without it.
+		var smoked := false
+		for g in get_tree().get_nodes_in_group("grenades"):
+			if g.blocks_line(eye, target_eye):
+				smoked = true
+				break
+		if smoked:
 			continue
 
 		best = other
@@ -221,3 +251,17 @@ func do_buy(round_number: int) -> void:
 		has_helmet = plan.helmet
 	has_kit = plan.kit
 	money = StrikeEconomy.clamp_money(money - plan.spend)
+
+	# Buy utility with what is left over. Attackers favour smoke and flash to
+	# take space; defenders favour HE to punish a push.
+	_used_utility = false
+	grenades = {StrikeGrenade.Kind.HE: 0, StrikeGrenade.Kind.SMOKE: 0,
+			StrikeGrenade.Kind.FLASH: 0}
+	var spare := money
+	if team == StrikeMatch.Team.T:
+		if spare >= 300: grenades[StrikeGrenade.Kind.SMOKE] += 1; spare -= 300
+		if spare >= 200: grenades[StrikeGrenade.Kind.FLASH] += 1; spare -= 200
+	else:
+		if spare >= 300: grenades[StrikeGrenade.Kind.HE] += 1; spare -= 300
+		if spare >= 300: grenades[StrikeGrenade.Kind.SMOKE] += 1; spare -= 300
+	money = StrikeEconomy.clamp_money(spare)
