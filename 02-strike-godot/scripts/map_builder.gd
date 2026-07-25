@@ -218,10 +218,12 @@ const ROUTE_T_B_MID := [
 	Vector3(900, 0, -500), SITE_B,
 ]
 const ROUTE_CT_A := [
-	Vector3(-700, 0, -2300), Vector3(-1500, 0, -1700), SITE_A,
+	Vector3(-700, 0, -2300), Vector3(-1500, 0, -1900),
+	Vector3(-2300, 0, -1600),
 ]
 const ROUTE_CT_B := [
-	Vector3(700, 0, -2300), Vector3(1500, 0, -1700), SITE_B,
+	Vector3(700, 0, -2300), Vector3(1500, 0, -1900),
+	Vector3(2300, 0, -1600),
 ]
 
 
@@ -230,15 +232,7 @@ const ROUTE_CT_B := [
 static func route_to(is_ct: bool, site_is_a: bool, variant: int) -> Array:
 	if is_ct:
 		return (ROUTE_CT_A if site_is_a else ROUTE_CT_B).duplicate()
-	var pick: int = variant % 3
+	var pick: int = variant % 2
 	if site_is_a:
-		if pick == 0:
-			return ROUTE_T_A_LONG.duplicate()
-		elif pick == 1:
-			return ROUTE_T_A_SHORT.duplicate()
-		return ROUTE_T_A_MID.duplicate()
-	if pick == 0:
-		return ROUTE_T_B_TUNNELS.duplicate()
-	elif pick == 1:
-		return ROUTE_T_B_SHORT.duplicate()
-	return ROUTE_T_B_MID.duplicate()
+		return ROUTE_T_A_LONG.duplicate() if pick == 0 else ROUTE_T_A_MID.duplicate()
+	return ROUTE_T_B_TUNNELS.duplicate() if pick == 0 else ROUTE_T_B_MID.duplicate()

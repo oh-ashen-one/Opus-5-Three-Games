@@ -11,6 +11,14 @@ enum State { HOLD, ROTATE, PUSH, PLANT, DEFUSE, RETREAT }
 
 @export var difficulty := 0.65      ## 0..1. Scales reaction, aim and discipline.
 
+## Bots had unlimited sight range and 360-degree vision, so CTs engaged Ts the
+## moment they left spawn, from clean across a 6000-unit map. Nobody ever
+## reached a bombsite -- the closest any T got was 1764 units, and a plant needs
+## under 500. These two numbers are what make approaching a site possible, and
+## what make flanking mean anything.
+@export var sight_range := 2600.0
+@export var fov_degrees := 110.0
+
 var state: int = State.HOLD
 var target_position := Vector3.ZERO
 var _path: Array = []
@@ -84,19 +92,34 @@ func _think() -> void:
 	else:
 		_reaction_timer = 0.0
 
-	# Health discipline: a hurt bot backs off rather than trading.
-	if health < 35.0 and _enemy != null:
+	# Health discipline: a hurt bot backs off rather than trading -- except the
+	# carrier, whose death loses the round outright.
+	if health < 35.0 and _enemy != null and not carrying_bomb:
 		state = State.RETREAT
 
 
 func _act(delta: float) -> void:
 	if _enemy != null and _enemy.is_alive:
+		var enemy_distance := global_position.distance_to(_enemy.global_position)
+
+		# The bomb carrier plays the objective, not the duel. Stopping to trade
+		# every sightline is why plants almost never happened: the carrier died
+		# somewhere in mid and the round became a pure deathmatch.
+		if carrying_bomb and enemy_distance > 900.0 and health > 55.0:
+			_advance_route(delta)
+			return
+
 		_reaction_timer -= delta
 		_face(_enemy.global_position + Vector3(0, 140, 0))
-		if _reaction_timer <= 0.0:
-			# Stop before shooting: firing on the move is punished by the same
-			# accuracy penalty the player suffers, and good bots know it.
-			bot_wish_dir = Vector2.ZERO
+		bot_wish_dir = Vector2.ZERO
+
+		# Stop *and wait for the stop to take effect* before firing. Zeroing the
+		# wish direction does not stop you instantly -- friction takes ~0.2s -- so
+		# bots were shooting mid-slide at the full movement accuracy penalty.
+		# Defenders holding an angle were already still, so attackers ate the
+		# penalty and lost nearly every entry. This is the counter-strafe the
+		# player is expected to learn, applied by the bots.
+		if _reaction_timer <= 0.0 and current_speed() < 45.0:
 			try_fire()
 		return
 
@@ -106,15 +129,19 @@ func _act(delta: float) -> void:
 			bot_wish_dir = Vector2.ZERO
 			_face(_hold_angle + Vector3(0, 0, -400))
 		State.ROTATE, State.PUSH, State.PLANT, State.DEFUSE:
-			var waypoint := _current_waypoint()
-			# Advance along the route as each waypoint is reached.
-			if global_position.distance_to(waypoint) < 220.0 and _path_index < _path.size():
-				_path_index += 1
-				waypoint = _current_waypoint()
-			_move_toward(waypoint, delta)
+			_advance_route(delta)
 		State.RETREAT:
 			var away := global_position - (_enemy.global_position if _enemy else target_position)
 			_move_toward(global_position + away.normalized() * 600.0, delta)
+
+
+## Walk the waypoint route, advancing as each point is reached.
+func _advance_route(delta: float) -> void:
+	var waypoint := _current_waypoint()
+	if global_position.distance_to(waypoint) < 220.0 and _path_index < _path.size():
+		_path_index += 1
+		waypoint = _current_waypoint()
+	_move_toward(waypoint, delta)
 
 
 func _move_toward(pos: Vector3, _delta: float) -> void:
@@ -157,8 +184,17 @@ func _find_visible_enemy() -> StrikePlayer:
 			continue
 
 		var distance := eye.distance_to(other.global_position)
-		if distance >= best_distance:
+		if distance > sight_range or distance >= best_distance:
 			continue
+
+		# Bots only see what is roughly in front of them.
+		var to_other := (other.global_position - global_position)
+		to_other.y = 0.0
+		if to_other.length_squared() > 1.0:
+			var forward := -global_transform.basis.z
+			var angle := rad_to_deg(forward.normalized().angle_to(to_other.normalized()))
+			if angle > fov_degrees * 0.5:
+				continue
 
 		# Line of sight: walls and boxes genuinely block vision, which is what
 		# makes holding an angle and using cover meaningful.

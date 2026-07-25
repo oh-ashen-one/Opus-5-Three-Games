@@ -103,6 +103,7 @@ func _start_round() -> void:
 
 		p.reset_for_round(spawn, this_side)
 		if p is StrikeBot:
+			p.difficulty = 0.68 if this_side == StrikeMatch.Team.T else 0.55
 			p.do_buy(round_number)
 		elif round_number == 1:
 			p.equip(StrikeWeapons.Id.USP)
@@ -121,13 +122,19 @@ func _start_round() -> void:
 				break
 	if carrier != null:
 		carrier.carrying_bomb = true
+		if carrier is StrikeBot:
+			var site_a: bool = round_number % 2 == 1
+			# Carrier takes the mid route: shortest path to either site.
+			carrier.set_route(StrikeMapBuilder.route_to(false, site_a, 2),
+					StrikeBot.State.PLANT)
 
 	_assign_bot_objectives()
 
 
 func _assign_bot_objectives() -> void:
 	# Ts execute a site; CTs split to hold both. Simple, but it produces the
-	# right shapes: attackers commit, defenders spread.
+	# right shapes: attackers commit, defenders spread and hold rather than
+	# roaming into mid, which used to kill the T side before any plant.
 	var target_site: Vector3 = StrikeMapBuilder.SITE_A if (round_number % 2 == 1) \
 			else StrikeMapBuilder.SITE_B
 	var site_is_a: bool = round_number % 2 == 1

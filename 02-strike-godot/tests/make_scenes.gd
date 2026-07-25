@@ -7,6 +7,7 @@ func _init() -> void:
 	_save("res://scripts/match_scene.gd", "Match", Node3D, "res://scenes/match.tscn")
 	_save("res://scripts/main_menu.gd", "MainMenu", Control, "res://scenes/main_menu.tscn")
 	_save("res://tests/sim_match.gd", "Sim", Node, "res://scenes/sim.tscn")
+	_save("res://tests/capture.gd", "Capture", Node, "res://scenes/capture.tscn")
 	quit(0)
 
 

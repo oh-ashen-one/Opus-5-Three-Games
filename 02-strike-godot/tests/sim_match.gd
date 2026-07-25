@@ -25,6 +25,10 @@ var _report_timer := 0.0
 var _plants := 0
 var _defuses := 0
 var _was_planted := false
+var _closest_t_to_site := 99999.0
+var _carrier_deaths := 0
+var _had_carrier := false
+var _last_carrier_id := 0
 
 
 func _ready() -> void:
@@ -71,6 +75,30 @@ func _process(delta: float) -> void:
 	if _scene.bomb_defused and _was_planted:
 		_defuses += 1
 	_was_planted = _scene.bomb_planted
+
+	# How close do Ts actually get to a bombsite? If this never drops under ~500
+	# the plant is unreachable and no amount of economy tuning matters.
+	var carrier_alive := false
+	for p in _players():
+		if not is_instance_valid(p) or not p.is_alive:
+			continue
+		if p.team != StrikeMatch.Team.T:
+			continue
+		var da: float = p.global_position.distance_to(StrikeMapBuilder.SITE_A)
+		var db: float = p.global_position.distance_to(StrikeMapBuilder.SITE_B)
+		_closest_t_to_site = minf(_closest_t_to_site, minf(da, db))
+		if p.carrying_bomb:
+			carrier_alive = true
+	# Track the carrier by identity, not by "is anyone carrying" -- the bomb
+	# transfers on death, so the latter is always true and measures nothing.
+	var carrier_id := 0
+	for p in _players():
+		if is_instance_valid(p) and p.carrying_bomb and p.is_alive:
+			carrier_id = p.get_instance_id()
+	if _last_carrier_id != 0 and carrier_id != _last_carrier_id and not _scene.bomb_planted:
+		_carrier_deaths += 1
+	_last_carrier_id = carrier_id
+	_had_carrier = carrier_alive
 
 	_report_timer -= delta
 	if _report_timer <= 0.0:
@@ -159,6 +187,8 @@ func _finish() -> void:
 	print("")
 	print("rounds resolved: %d" % _rounds_seen)
 	print("bomb plants: %d   defuses: %d" % [_plants, _defuses])
+	print("closest a T ever got to a site: %.0f (plant needs <500)" % _closest_t_to_site)
+	print("carrier changed hands (deaths/rounds): %d" % _carrier_deaths)
 	print("score: T %d - CT %d" % [
 			_scene.t_score if _scene != null else -1,
 			_scene.ct_score if _scene != null else -1])
