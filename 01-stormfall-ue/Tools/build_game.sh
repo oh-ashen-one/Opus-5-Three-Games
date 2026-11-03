@@ -9,7 +9,7 @@
 # UnrealBuildTool bakes a *relative* rpath from Binaries/Mac to the engine's
 # ThirdParty libraries. It emits nine "../" segments, which assumes the project
 # sits deeper under the filesystem root than this one does. From
-#   /Users/midir/dev/Opus-5-Three-Games/01-stormfall-ue/Binaries/Mac
+#   $HOME/dev/Opus-5-Three-Games/01-stormfall-ue/Binaries/Mac
 # nine levels up overshoots /Users entirely and resolves to
 #   /Shared/Epic Games/...        (instead of /Users/Shared/Epic Games/...)
 # so dyld cannot find libmetalirconverter.dylib and the game dies before it
