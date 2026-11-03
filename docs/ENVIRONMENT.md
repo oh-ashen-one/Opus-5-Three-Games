@@ -17,7 +17,7 @@ Builds **all three games**. Apple M3 Ultra, macOS 26.5.2.
 | Xcode | 26.6 |
 | git | 2.50.1 — **`git-lfs` is NOT installed** |
 | Codex CLI | **not installed** — art generation happens on the MacBook |
-| Repo | `/Users/midir/dev/Opus-5-Three-Games` |
+| Repo | `$HOME/dev/Opus-5-Three-Games` |
 
 > ⚠️ **Disk: ~122 GB free of 1.8 TB.** A UE project plus its DerivedDataCache will claim 30–60 GB.
 > Cap the DDC, prune `Saved/` between iterations, and raise a flag if free space drops below 30 GB.

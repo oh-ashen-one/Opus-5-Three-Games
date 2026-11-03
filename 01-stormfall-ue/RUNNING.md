@@ -75,7 +75,7 @@ game code. Three separate faults, in the order they surface:
 
 1. **Broken relative rpath.** UnrealBuildTool bakes nine `../` segments from `Binaries/Mac` to the
    engine's ThirdParty libraries. This project lives at
-   `/Users/midir/dev/Opus-5-Three-Games/01-stormfall-ue`, so nine levels up overshoots `/Users`
+   `$HOME/dev/Opus-5-Three-Games/01-stormfall-ue`, so nine levels up overshoots `/Users`
    and resolves to `/Shared/Epic Games/…` instead of `/Users/Shared/Epic Games/…`. `dyld` then
    cannot find `libmetalirconverter.dylib` and the process dies before printing one line of its
    own log. `DYLD_LIBRARY_PATH` is no help — SIP strips `DYLD_*`.
@@ -91,7 +91,7 @@ game code. Three separate faults, in the order they surface:
    location from inside the bundle.
 
 The common root cause is that the engine (`/Users/Shared/Epic Games/UE_5.8`) and this project
-(`/Users/midir/dev/…`) sit on different branches of `/Users`, and UE's staging computes
+(`$HOME/dev/…`) sit on different branches of `/Users`, and UE's staging computes
 binary-relative paths that assume a fixed depth.
 
 **The likely fix, untried:** install the engine and project under a common ancestor — for example
